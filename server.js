@@ -12,7 +12,9 @@ mongoose.connect(process.env.DB_HOST,
   {
     useNewUrlParser: true,
     useUnifiedTopology: true
-  }).then(() => {})
+  })
+  .then(() => console.log('connected to mongodb..'))
+  .catch(e => console.log('could not connect to mongodb', e))
 
 app.use(session({
   secret: process.env.APP_SECRET,

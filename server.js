@@ -68,7 +68,7 @@ app.use('/api/binome', BinomeRoute)
 let StockRoute = require('./routes/stock.route')
 app.use('/api/stock', StockRoute)
 
-let port = 3000
-app.listen(port, function () {
+let port = process.env.PORT || 3000;
+app.listen(port, '0.0.0.0', function () {
   console.log('Express server listening on port ' + port)
 })

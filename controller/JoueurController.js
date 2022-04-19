@@ -50,6 +50,7 @@ exports.subscribePlayer = async (req, res) => {
       _id: new mongoose.Types.ObjectId(),
       nom: req.body.joueur.nom,
       age: req.body.joueur.age,
+      buffet: req.body.joueur.buffet,
       tableaux: req.body.tableaux.map(tableau => tableau._id),
       classement: (req.body.joueur.classement ? req.body.joueur.classement : 0)
     })
@@ -57,7 +58,7 @@ exports.subscribePlayer = async (req, res) => {
   }
 
   try {
-    // Un créé un binôme s'il n'y en a pas assez pour chaque tableau en format double où le joueur s'est inscrit
+    // On créé un binôme s'il n'y en a pas assez pour chaque tableau en format double où le joueur s'est inscrit
     for (let i = 0; i < req.body.tableaux.length; i++) {
       if (req.body.tableaux[i].format === 'double'){
         let nbJoueursInscrits = await Joueur.countDocuments({tableaux : {$all: [req.body.tableaux[i]]}})
@@ -82,6 +83,7 @@ exports.editPlayer = (req, res) => {
   const joueur = {
     nom: req.body.nom,
     age: req.body.age,
+    buffet: req.body.buffet,
     classement: (req.body.classement ? req.body.classement : 0)
   }
   Joueur.updateOne({_id: req.params.id_player}, {$set: joueur}).then(result => res.status(200).json(result)).catch(() => res.status(500).send('Impossible de modifier le joueur'))

@@ -5,6 +5,7 @@ const joueurSchema = mongoose.Schema({
   classement: Number,
   nom: String,
   age: Number,
+  buffet: Boolean,
   tableaux: [{
       type: mongoose.Types.ObjectId,
       ref: 'Tableaux'

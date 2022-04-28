@@ -48,8 +48,8 @@ exports.subscribePlayer = async (req, res) => {
   } else {
     const joueur = new Joueur({
       _id: new mongoose.Types.ObjectId(),
-      nom: req.body.joueur.nom,
-      age: req.body.joueur.age,
+      nom: req.body.joueur.nom.toUpperCase(),
+      age: req.body.joueur.age === 0 ? null : req.body.joueur.age,
       buffet: req.body.joueur.buffet,
       tableaux: req.body.tableaux.map(tableau => tableau._id),
       classement: (req.body.joueur.classement ? req.body.joueur.classement : 0)

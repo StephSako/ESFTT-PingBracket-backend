@@ -7,6 +7,7 @@ const parametreSchema = mongoose.Schema({
   texte_debut: String,
   texte_buffet: String,
   texte_fin: String,
+  consignes_tableaux: String,
   open: Boolean
 })
 

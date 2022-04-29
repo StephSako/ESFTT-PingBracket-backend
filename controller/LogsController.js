@@ -9,6 +9,9 @@ exports.add = async (req, res) => {
     Logs.updateOne({ _id: logs._id},
     {
         $push: { logs: req.body.log }
-    }).then((result) => res.status(200).json({message: result})).catch(() => res.status(500).send('Impossible d\'ajouter le log d\'inscription'))
+    }).then(() => res.status(200).json({message: 'Log ajouté'})).catch(() => res.status(500).send('Impossible d\'ajouter le log d\'inscription'))
 }
-  
+
+exports.empty = async (req, res) => {
+    Logs.updateMany({}, { $set: { logs: [] } }).then(() => res.status(200).json({message: 'Logs supprimés'})).catch(() => res.status(500).send('Impossible d\'ajouter le log d\'inscription'))
+}

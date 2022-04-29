@@ -3,6 +3,7 @@ const Joueur = require('../model/Joueur')
 const Poule = require('../model/Poule')
 const Bracket = require('../model/Bracket')
 const Binomes = require('../model/Binome')
+const Logs = require('../model/Logs')
 const Buffet = require('../model/Buffet')
 const mongoose = require('mongoose')
 const _ = require('lodash');
@@ -50,6 +51,7 @@ exports.unsubscribeInvalidPlayers = (req, res) => {
 
 exports.resetTournament = async (req, res) => {
   try {
+    await Logs.updateMany({}, { $set: { logs: [] } })
     await Bracket.deleteMany({})
     await Poule.deleteMany({})
     await Binomes.deleteMany({})

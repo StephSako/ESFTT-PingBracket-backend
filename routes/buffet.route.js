@@ -9,4 +9,6 @@ router.get('/platsAlreadyCooked', AuthMiddleware, BuffetController.platsAlreadyC
 
 router.post('/register', AuthMiddleware, BuffetController.register);
 
+router.post('/edit', AuthMiddleware, BuffetController.edit);
+
 module.exports = router;

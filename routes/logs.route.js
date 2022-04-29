@@ -7,4 +7,6 @@ router.get('/', AuthMiddleware, LogsController.getAll);
 
 router.put('/add', AuthMiddleware, LogsController.add);
 
+router.post('/empty', AuthMiddleware, LogsController.empty);
+
 module.exports = router;

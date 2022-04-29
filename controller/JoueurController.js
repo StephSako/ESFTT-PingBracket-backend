@@ -39,10 +39,10 @@ exports.unassignedPlayersBinomes = async (req, res) => {
 }
 
 exports.subscribePlayer = async (req, res) => {
-  let searchedJoueur = await Joueur.findOne({nom: req.body.joueur.nom})
+  let searchedJoueur = await Joueur.findOne({nom: req.body.joueur.nom.toUpperCase()})
   if (searchedJoueur) {
     await Joueur.updateOne(
-      {nom: req.body.joueur.nom},
+      {nom: req.body.joueur.nom.toUpperCase()},
       {$push: {tableaux: req.body.tableaux.map(tableau => tableau._id)}}
     )
   } else {
@@ -81,7 +81,7 @@ exports.subscribePlayer = async (req, res) => {
 
 exports.editPlayer = (req, res) => {
   const joueur = {
-    nom: req.body.nom,
+    nom: req.body.nom.toUpperCase(),
     age: req.body.age,
     buffet: req.body.buffet,
     classement: (req.body.classement ? req.body.classement : 0)

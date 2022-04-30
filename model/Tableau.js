@@ -7,6 +7,7 @@ const tableauSchema = mongoose.Schema({
   poules: Boolean,
   consolante: Boolean,
   age_minimum: Number,
+  is_launched: Number,
   nbPoules: Number
 },{ _id : false })
 

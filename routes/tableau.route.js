@@ -15,6 +15,8 @@ router.post('/create', AuthMiddleware, TableauController.createTableau);
 
 router.put('/edit/:id_tableau', AuthMiddleware, TableauController.editTableau);
 
+router.put('/change_launch_state/:id_tableau', AuthMiddleware, TableauController.changeLaunchState);
+
 router.put('/unsubscribe/invalid/:id_tableau', AuthMiddleware, TableauController.unsubscribeInvalidPlayers);
 
 router.delete('/reset', AuthMiddleware, TableauController.resetTournament);

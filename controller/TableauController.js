@@ -36,6 +36,7 @@ exports.createTableau = (req, res) => {
     poules: req.body.poules,
     consolante: req.body.consolante,
     age_minimum: req.body.age_minimum,
+    is_launched: 0, // 0 = initialisé, 1 = en cours, 2 = terminé
     nbPoules: req.body.nbPoules
   })
   tableau.save().then(result => res.status(200).json({message: result})).catch(() => res.status(500).send('Impossible de créer le tableau'))
@@ -79,4 +80,8 @@ exports.deleteTableau = async (req, res) => {
 exports.unsubscribeAllPlayers = async (req, res) => {
   await Bracket.deleteMany({tableau: req.body.tableau_id})
   Joueur.updateMany({}, {$pull: {tableaux: {$in: [req.body.tableau_id]}}}).then(() => res.status(200).json({message: 'No error'})).catch(() => res.status(500).send('Impossible de désinscrire tous les joueurs du tableau'))
+}
+
+exports.changeLaunchState = (req, res) => {
+  Tableau.updateOne({_id: req.params.id_tableau}, {$set: { is_launched : req.body.is_launched } }).then(() => res.status(200).json({message: 'Le tableau ' + (req.body.is_launched === 0 ? 'a été lancé' : 'est terminé')})).catch(() => res.status(500).send('Impossible de changer l\'état du tableau'))
 }

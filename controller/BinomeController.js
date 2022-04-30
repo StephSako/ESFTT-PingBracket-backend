@@ -19,9 +19,9 @@ exports.editBinome = async (req, res) => {
         }
       })
     }
-    res.status(200).json({message: 'La binome a été mise à jour'})
+    res.status(200).json({message: 'Le binôme a été mis à jour'})
   } catch (e) {
-    res.status(500).send('Impossible de modifier la binome')
+    res.status(500).send('Impossible de modifier le binôme')
   }
 }
 

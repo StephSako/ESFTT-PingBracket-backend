@@ -98,14 +98,14 @@ exports.unsubscribedPlayer = async (req, res) => {
       // On supprime le joueur du binôme auquel il est assigné
       await Binome.updateMany({tableau: req.params.tableau}, {$pull: {joueurs: {$in: [req.params.id_player]}}})
 
-      // On supprime le premier binôme vide en trop
+      // On supprime le premier binôme vide en trop du tableau
       let nbMinBinomesNecessaires = await Joueur.countDocuments({tableaux : {$all: [req.params.tableau]}})
       let nbBinomes = await Binome.countDocuments({tableau : req.params.tableau})
       if (nbMinBinomesNecessaires % 2 !== 0) nbMinBinomesNecessaires++
       nbMinBinomesNecessaires /= 2
-      if (nbBinomes > nbMinBinomesNecessaires) await Binome.deleteOne({ joueurs: { $exists: true, $size: 0 } })
+      if (nbBinomes > nbMinBinomesNecessaires) await Binome.deleteOne({ tableau: req.params.tableau, joueurs: { $exists: true, $size: 0 } })
     }
-    res.status(200).json({message: 'No error'})
+    res.status(200).json({message: 'Joueur désinscrit du tableau'})
   } catch (e) {
     res.status(500).send('Impossible de désinscrire le joueur du tableau')
   }
@@ -122,7 +122,7 @@ exports.deletePlayer = async (req, res) => {
   await Binome.updateMany({}, {$pull: {joueurs: {$in: [req.params.id_player]}}})
 
   // On le supprime définitivement
-  Joueur.deleteOne({ _id: req.params.id_player}).then(result => res.status(200).json(result)).catch(() => res.status(500).send('Impossible de supprimer le joueur'))
+  Joueur.deleteOne({ _id: req.params.id_player}).then(() => res.status(200).json('Joueur supprimé')).catch(() => res.status(500).send('Impossible de supprimer le joueur'))
 }
 
 exports.movePlayers = async (req, res) => {

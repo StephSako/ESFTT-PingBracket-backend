@@ -9,7 +9,7 @@ router.put('/edit/:idJoueur', AuthMiddleware, BinomeController.editBinome);
 
 router.delete('/remove_player/:id_binome/:id_player', AuthMiddleware, BinomeController.removePlayerInBinome);
 
-router.put('/remove_player/:id_binome/:id_player', AuthMiddleware, BinomeController.generateOfSpecificTableau);
+router.put('/generate/:tableau', AuthMiddleware, BinomeController.generateOfSpecificTableau);
 
 router.delete('/reset/:tableau', AuthMiddleware, BinomeController.deleteAllBinomesOfSpecificTableau);
 

@@ -31,14 +31,14 @@ exports.removePlayerInBinome = (req, res) => {
 
 exports.generateOfSpecificTableau = async (req, res) => {
   try {
-    let nbJoueursInscrits = await Joueur.countDocuments({tableaux : {$all: [req.params.id_tableau]}})
+    let nbJoueursInscrits = await Joueur.countDocuments({tableaux : {$all: [req.params.tableau]}})
     if (nbJoueursInscrits % 2 !== 0){ nbJoueursInscrits += 1 }
     nbJoueursInscrits /= 2
 
     for (let i = 0; i < nbJoueursInscrits; i++) {
       let binome = new Binome({
         _id: new mongoose.Types.ObjectId(),
-        tableau: req.params.id_tableau,
+        tableau: req.params.tableau,
         joueurs: []
       })
       await binome.save()

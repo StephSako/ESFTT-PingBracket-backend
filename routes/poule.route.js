@@ -13,4 +13,6 @@ router.put('/editStatus/:id_poule', AuthMiddleware, PouleController.updateStatus
 
 router.delete('/delete/:idTableau', AuthMiddleware, PouleController.deleteAllPoulesOfSpecificTableau);
 
+router.put('/validate_all_poules/:id_tableau', AuthMiddleware, PouleController.validateAllPoules);
+
 module.exports = router;

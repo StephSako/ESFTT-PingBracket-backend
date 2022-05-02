@@ -91,3 +91,11 @@ exports.updateStatus = (req, res) => {
 exports.deleteAllPoulesOfSpecificTableau = (req, res) => {
   Poule.deleteMany({tableau: req.params.idTableau}).then(() => res.status(200).json({message: 'Poules supprimées'})).catch(() => res.status(500).send('Impossible de supprimer les poules demandées'))
 }
+
+exports.validateAllPoules = (req, res) => {
+  Poule.updateMany({tableau: req.params.id_tableau}, {
+    $set: {
+      locked: true
+    }
+  }).then(() => res.json({message: "Toutes les poules ont été validées"})).catch(() => res.status(500).send('Impossible de valider toutes les poules'))
+}

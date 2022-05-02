@@ -44,7 +44,7 @@ exports.generateOfSpecificTableau = async (req, res) => {
       await binome.save()
     }
 
-    res.status(200).json({message: 'OK'})
+    res.status(200).json({message: 'Binômes régénérés'})
   } catch (err) {
     res.status(500).send('Impossible de générer les binômes')
   }

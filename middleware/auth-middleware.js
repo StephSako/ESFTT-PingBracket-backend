@@ -6,6 +6,6 @@ module.exports = (req, res, next) => {
     next();
   } catch {
     if (req.headers.authorization === 'ANONYMOUSLY_LOGGED') { next() }
-    else res.status(500).send('Vous n\'êtes pas connecté.')
+    else res.status(401).send('Vous n\'êtes pas connecté.')
   }
 };

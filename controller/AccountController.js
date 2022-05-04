@@ -17,7 +17,7 @@ exports.login = (req, res) => {
 exports.editUsername = (req, res) => {
   Account.findByIdAndUpdate({_id: req.body._id}, {username: req.body.username}, {new: true, useFindAndModify: false}).then(result => {
     let token = jwt.sign(result.toJSON(), process.env.APP_SECRET, {
-      expiresIn: '365d'
+      expiresIn: '7d'
     })
     res.json({token: token})
   }).catch(() => res.status(500).send('Impossible de modifier l\'username du compte'))
@@ -28,7 +28,7 @@ exports.editPassword = (req, res) => {
     if (bcrypt.compareSync(req.body.actualPassword, account.password)) {
       Account.findByIdAndUpdate({_id: req.body._id}, {password: bcrypt.hashSync(req.body.newPassword, 12)}, {new: true, useFindAndModify: false}).then(result => {
         let token = jwt.sign(result.toJSON(), process.env.APP_SECRET, {
-          expiresIn: '1d'
+          expiresIn: '7d'
         })
         res.json({token: token})
       }).catch(() => res.status(500).send('Impossible de modifier le mot de passe du compte'))

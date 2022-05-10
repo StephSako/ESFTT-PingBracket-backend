@@ -56,7 +56,7 @@ exports.resetTournament = async (req, res) => {
     await Bracket.deleteMany({})
     await Poule.deleteMany({})
     await Binomes.deleteMany({})
-    await Buffet.updateMany({}, { $set: { nb_moins_13_ans: 0, nb_plus_13_ans: 0, plats: [] } })
+    await Buffet.updateMany({}, { $set: { enfant: 0, ado_adulte: 0, plats: [] } })
     await Tableau.updateMany({}, { $set: { is_launched: 0 } })
     await Joueur.deleteMany({})
     res.status(200).json({message: 'Tournoi remis à zéro'})

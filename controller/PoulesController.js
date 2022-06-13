@@ -24,10 +24,11 @@ exports.generatePoule = async (req, res) => {
       poules.push([])
     }
 
-    let participants = []
+    let participants = [];
     if (req.body.format === 'simple') participants = await Joueur.find({ tableaux : {$all: [req.body._id]}}).sort({classement: 'desc', nom: 'asc'})
     else if (req.body.format === 'double'){
-      participants = await Binome.find({ tableau : req.body._id, joueurs: {$size: 2}})
+      participants = await Binome.find({ tableau : req.body._id})
+      participants = participants.filter(binome => binome.joueurs.length >= 2 && binome.joueurs.length <= req.body.maxNumberPlayers)
       participants = helper.shuffle(participants)
     }
     await Poule.deleteMany({ tableau: req.body._id})

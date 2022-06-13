@@ -103,12 +103,12 @@ exports.generateBracket = async (req, res) => {
   // On supprime tous les matches
   await Bracket.deleteMany({ tableau: req.params.tableau, phase: req.params.phase})
 
-  let poules
+  let poules;
   if (req.body.format === 'double'){
     if (req.body.poules) {
       poules = await Poule.find({tableau: req.params.tableau}).populate('participants')
       poules.forEach(poule => {
-        poule.participants = poule.participants.filter(participant => participant.joueurs.length === 2)
+        poule.participants = poule.participants.filter(participant => participant.joueurs.length >= 2 && participant.joueurs.length <= parseInt(req.body.maxNumberPlayers))
       })
     } else {
       poules = await Binome.find({tableau: req.params.tableau, joueurs: {$size: 2}})
@@ -117,7 +117,7 @@ exports.generateBracket = async (req, res) => {
     if (req.body.poules) {
       poules = await Poule.find({tableau: req.params.tableau})
     } else {
-      res.status(500).send("Il n'existe pas de tableau simple sans poules.")
+      res.status(500).send("Impossible de créer de tableau au format 'simple' sans poules.")
     }
   }
 

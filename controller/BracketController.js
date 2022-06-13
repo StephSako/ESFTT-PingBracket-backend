@@ -100,62 +100,60 @@ exports.setWinner = async (req, res) => {
 }
 
 exports.generateBracket = async (req, res) => {
-  // On supprime tous les matches
-  await Bracket.deleteMany({ tableau: req.params.tableau, phase: req.params.phase})
-
-  let poules;
-  if (req.body.format === 'double'){
-    if (req.body.poules) {
-      poules = await Poule.find({tableau: req.params.tableau}).populate('participants')
-      poules.forEach(poule => {
-        poule.participants = poule.participants.filter(participant => participant.joueurs.length >= 2 && participant.joueurs.length <= parseInt(req.body.maxNumberPlayers))
-      })
-    } else {
-      poules = await Binome.find({tableau: req.params.tableau, joueurs: {$size: 2}})
-    }
-  } else if (req.body.format === 'simple') {
-    if (req.body.poules) {
-      poules = await Poule.find({tableau: req.params.tableau})
-    } else {
-      res.status(500).send("Impossible de créer de tableau au format 'simple' sans poules.")
-    }
-  }
-
-  // On calcule combien de rounds sont nécessaires en fonction du nombre de joueurs / binômes qualifiés si le tableau a des poules
-  let nbQualified = 0, nbRounds, rankOrderer
-  if (req.body.poules) poules.forEach(poule => nbQualified += poule.participants.slice((req.params.phase === 'finale' ? 0 : 2), (req.params.phase === 'finale' ? 2 : 4)).length)
-  else nbQualified = poules.length
-
-  if (nbQualified > 64){
-    nbRounds = 7
-    rankOrderer = ORDRE_SOIXANTEQUATREIEME
-  }
-  else if (nbQualified > 32){
-    nbRounds = 6
-    rankOrderer = ORDRE_TRENTEDEUXIEME
-  }
-  else if (nbQualified > 16){
-    nbRounds = 5
-    rankOrderer = ORDRE_SEIZIEME
-  }
-  else if (nbQualified > 8){
-    nbRounds = 4
-    rankOrderer = ORDRE_HUITIEME
-  }
-  else if (nbQualified > 4){
-    nbRounds = 3
-    rankOrderer = ORDRE_QUART
-  }
-  else if (nbQualified > 2){
-    nbRounds = 2
-    rankOrderer = ORDRE_DEMI
-  }
-  else if (nbQualified > 1){
-    nbRounds = 1
-    rankOrderer = ORDRE_FINALE
-  }
-
   try {
+    // On supprime tous les matches
+    await Bracket.deleteMany({ tableau: req.params.tableau, phase: req.params.phase})
+
+    let poules;
+    if (req.body.format === 'double'){
+      if (req.body.poules) {
+        poules = await Poule.find({tableau: req.params.tableau}).populate('participants')
+        poules.forEach(poule => {
+          poule.participants = poule.participants.filter(participant => participant.joueurs.length >= 2 && participant.joueurs.length <= parseInt(req.body.maxNumberPlayers))
+        })
+      } else {
+        poules = await Binome.find({tableau: req.params.tableau})
+        poules = poules.filter(binome => binome.joueurs.length >= 2 && binome.joueurs.length <= parseInt(req.body.maxNumberPlayers))
+      }
+    } else if (req.body.format === 'simple') {
+      if (req.body.poules) poules = await Poule.find({tableau: req.params.tableau})
+      else res.status(500).send("Impossible de créer de tableau au format 'simple' sans poules.")
+    }
+
+    // On calcule combien de rounds sont nécessaires en fonction du nombre de joueurs/binômes qualifiés si le tableau a des poules
+    let nbQualified = 0, nbRounds, rankOrderer
+    if (req.body.poules) poules.forEach(poule => nbQualified += poule.participants.slice((req.params.phase === 'finale' ? 0 : 2), (req.params.phase === 'finale' ? 2 : 4)).length)
+    else nbQualified = poules.length
+
+    if (nbQualified > 64){
+      nbRounds = 7
+      rankOrderer = ORDRE_SOIXANTEQUATREIEME
+    }
+    else if (nbQualified > 32){
+      nbRounds = 6
+      rankOrderer = ORDRE_TRENTEDEUXIEME
+    }
+    else if (nbQualified > 16){
+      nbRounds = 5
+      rankOrderer = ORDRE_SEIZIEME
+    }
+    else if (nbQualified > 8){
+      nbRounds = 4
+      rankOrderer = ORDRE_HUITIEME
+    }
+    else if (nbQualified > 4){
+      nbRounds = 3
+      rankOrderer = ORDRE_QUART
+    }
+    else if (nbQualified > 2){
+      nbRounds = 2
+      rankOrderer = ORDRE_DEMI
+    }
+    else if (nbQualified > 1){
+      nbRounds = 1
+      rankOrderer = ORDRE_FINALE
+    }
+
     if (nbQualified > 1) {
       // On initialise tous les matches du bracket
       for (let i = nbRounds; i > 0; i--) {
@@ -220,7 +218,7 @@ exports.generateBracket = async (req, res) => {
       res.status(200).json({message: "No error"})
     }
     else res.status(500).send('Il n\'y a pas assez de ' + (req.body.format === 'simple' ? 'joueurs' : 'binômes'))
-  } catch(e) {
+  } catch(err) {
     res.status(500).send('Impossible de générer le bracket')
   }
 }

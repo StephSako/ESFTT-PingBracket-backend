@@ -8,11 +8,11 @@ const Buffet = require('../model/Buffet')
 const mongoose = require('mongoose')
 const _ = require('lodash');
 
-exports.getTableaux = (req, res) => {
+exports.getTableaux = (_req, res) => {
   Tableau.find().sort({nom: 'asc', age_minimum: 'asc'}).then(tableaux => res.status(200).json(tableaux)).catch(() => res.status(500).send('Impossible de récupérer tous les tableaux'))
 }
 
-exports.playerCountPerTableau = (req, res) => {
+exports.playerCountPerTableau = (_req, res) => {
   Joueur.aggregate([
     { $project: { tableaux: 1 } },
     { $unwind: '$tableaux' },
@@ -35,6 +35,7 @@ exports.createTableau = (req, res) => {
     format: req.body.format,
     poules: req.body.poules,
     consolante: req.body.consolante,
+    maxNumberPlayers: req.body.maxNumberPlayers,
     age_minimum: req.body.age_minimum,
     is_launched: 0, // 0 = initialisé, 1 = en cours, 2 = terminé
     nbPoules: req.body.nbPoules
@@ -50,7 +51,7 @@ exports.unsubscribeInvalidPlayers = (req, res) => {
   Joueur.updateMany({age: { $gte: req.body.age_minimum } }, {$pull: {tableaux: {$in: [req.params.id_tableau]}}}).then(result => res.status(200).json({message: result})).catch(() => res.status(500).send('Impossible de désinscrire les joueurs invalides'))
 }
 
-exports.resetTournament = async (req, res) => {
+exports.resetTournament = async (_req, res) => {
   try {
     await Logs.updateMany({}, { $set: { logs: [] } })
     await Bracket.deleteMany({})

@@ -27,9 +27,18 @@ exports.generatePoule = async (req, res) => {
     let participants = [];
     if (req.body.format === 'simple') participants = await Joueur.find({ tableaux : {$all: [req.body._id]}}).sort({classement: 'desc', nom: 'asc'})
     else if (req.body.format === 'double'){
-      participants = await Binome.find({ tableau : req.body._id})
+      participants = await Binome.find({ tableau : req.body._id}).populate('joueurs')
       participants = participants.filter(binome => binome.joueurs.length >= 2 && binome.joueurs.length <= req.body.maxNumberPlayers)
-      participants = helper.shuffle(participants)
+
+      // On ordonne les binômes selon les sommes décroissantes des classements des joueurs le composant, sinon dans l'ordre alphabétique croissant
+      let sortedArray = participants.sort((binome1, binome2) => {
+          let addClassement = (a, b) => a + b.classement
+          if (binome1.joueurs.reduce(addClassement, 0) === binome2.joueurs.reduce(addClassement, 0)){
+            return -(binome1.joueurs.sort((a, b) => a.nom.localeCompare(b.nom))[0].nom).localeCompare(binome2.joueurs.sort((a, b) => a.nom.localeCompare(b.nom))[0].nom)
+          }
+          return binome1.joueurs.reduce(addClassement, 0) - binome2.joueurs.reduce(addClassement, 0)
+      })
+      participants = sortedArray.reverse()
     }
     await Poule.deleteMany({ tableau: req.body._id})
 

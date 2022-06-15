@@ -13,6 +13,22 @@ const ORDRE_QUART              = [1, 8, 5, 4, 3, 6, 7, 2]
 const ORDRE_DEMI               = [1, 4, 3, 2]
 const ORDRE_FINALE             = [1, 2]
 
+const NB_PARTICIPANTS_PHASES_FINALES =
+{
+  finale: {
+    premier: 0,
+    deuxieme: 2
+  },
+  consolante: {
+    premier: 2,
+    deuxieme: 4
+  },
+  consolante_bis: {
+    premier: 4,
+    deuxieme: 6
+  }
+}
+
 // Push player into a specific match
 async function setPlayerSpecificMatch(id_round, id_match, id_player, tableau, phase){
   await Bracket.updateOne(
@@ -37,7 +53,6 @@ async function setPlayerSpecificMatch(id_round, id_match, id_player, tableau, ph
     }
   )
 }
-
 
 async function defineMatchStatusAndWinner(id_round, tableau, phase, id_match, winner_id) {
   // On définie :
@@ -78,7 +93,7 @@ async function defineMatchStatusAndWinner(id_round, tableau, phase, id_match, wi
   }
 }
 
-exports.poulesOfSpecificTableau = (req, res) => {
+exports.bracketOfSpecificTableau = (req, res) => {
   Bracket.find({tableau: req.params.tableau, phase: req.params.phase}).populate('tableau').populate({
     path: 'matches.joueurs._id',
     populate: { path: 'joueurs' }
@@ -122,7 +137,7 @@ exports.generateBracket = async (req, res) => {
 
     // On calcule combien de rounds sont nécessaires en fonction du nombre de joueurs/binômes qualifiés si le tableau a des poules
     let nbQualified = 0, nbRounds, rankOrderer
-    if (req.body.poules) poules.forEach(poule => nbQualified += poule.participants.slice((req.params.phase === 'finale' ? 0 : 2), (req.params.phase === 'finale' ? 2 : 4)).length)
+    if (req.body.poules) poules.forEach(poule => nbQualified += poule.participants.slice(NB_PARTICIPANTS_PHASES_FINALES[req.params.phase].premier, NB_PARTICIPANTS_PHASES_FINALES[req.params.phase].deuxieme).length)
     else nbQualified = poules.length
 
     if (nbQualified > 64){
@@ -184,7 +199,7 @@ exports.generateBracket = async (req, res) => {
       // On créé la liste des joueurs/binômes qualifiés
       if (req.body.poules) {
         for (let i = 0; i < poules.length; i++) {
-          qualified = qualified.concat(poules[i].participants.slice((req.params.phase === 'finale' ? 0 : 2), (req.params.phase === 'finale' ? 2 : 4))) // Nous qualifions les 2 premiers de la poule en phase finale, les 3ème et 4ème en consolante
+          qualified = qualified.concat(poules[i].participants.slice(NB_PARTICIPANTS_PHASES_FINALES[req.params.phase].premier, NB_PARTICIPANTS_PHASES_FINALES[req.params.phase].deuxieme)) // Nous qualifions les 2 premiers de la poule en phase finale, les 3ème et 4ème en consolante
         }
       } else { // Seul le format 'double' peux ne pas avoir de poules
         qualified = helper.shuffle(poules.map(binome => binome._id))

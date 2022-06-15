@@ -3,7 +3,7 @@ const router = express.Router();
 const BracketController = require("../controller/BracketController");
 const AuthMiddleware = require("../middleware/auth-middleware");
 
-router.get('/:tableau/:phase', AuthMiddleware, BracketController.poulesOfSpecificTableau);
+router.get('/:tableau/:phase', AuthMiddleware, BracketController.bracketOfSpecificTableau);
 
 router.put('/edit/:tableau/:phase/:id_round/:id_match', AuthMiddleware, BracketController.setWinner);
 

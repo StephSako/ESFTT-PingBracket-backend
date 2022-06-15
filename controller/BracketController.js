@@ -184,7 +184,7 @@ exports.generateBracket = async (req, res) => {
       // On créé la liste des joueurs/binômes qualifiés
       if (req.body.poules) {
         for (let i = 0; i < poules.length; i++) {
-          qualified = qualified.concat(poules[i].participants.slice((req.params.phase === 'finale' ? 0 : 2), (req.params.phase === 'finale' ? 2 : 4))) // Nous qualifions les 2 premiers de la poule en phase finale, 4 en consolante
+          qualified = qualified.concat(poules[i].participants.slice((req.params.phase === 'finale' ? 0 : 2), (req.params.phase === 'finale' ? 2 : 4))) // Nous qualifions les 2 premiers de la poule en phase finale, les 3ème et 4ème en consolante
         }
       } else { // Seul le format 'double' peux ne pas avoir de poules
         qualified = helper.shuffle(poules.map(binome => binome._id))

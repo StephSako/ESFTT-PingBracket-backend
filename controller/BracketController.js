@@ -116,6 +116,38 @@ exports.setWinner = async (req, res) => {
 
 exports.generateBracket = async (req, res) => {
   try {
+
+    let listPerdants = [];
+    // On repêche les perdants seulement pour la consolante et la consolante-bis
+    let parentPhase = req.params.phase === 'consolante_bis' ? 'consolante' : (req.params.phase === 'consolante' ? 'finale' : null)
+    if (parentPhase !== null) {
+      await Bracket.find({ 'tableau': req.params.tableau, 'phase': 'finale'}).sort({ "round": -1 }).populate({
+        path: 'matches.joueurs._id',
+        populate: { path: 'joueurs' }
+      }).limit(1).then(res => {
+        
+        if (res.length > 0) {
+          // Liste des matches du premier round ayant été joués
+          let matchesFirstRoundPlayed = res[0].matches;
+          matchesFirstRoundPlayed = matchesFirstRoundPlayed.filter(match => {
+            let resultats = match.joueurs.map(joueur => joueur.winner)
+            return !resultats.every(v => v === resultats[0])
+          })
+  
+          // On prend que les joueurs ayant perdus leurs rencontres
+          listPerdants = matchesFirstRoundPlayed.map(match => match.joueurs).map(joueurs => {
+            return joueurs.filter(joueur => !joueur.winner)
+          }).flat().map(perdant => perdant._id)
+  
+          // On classe selon leurs classements
+          listPerdants.sort((j1, j2) => {
+            return j2.classement - j1.classement
+          })
+          listPerdants = listPerdants.map(joueur => joueur._id)
+        }
+      })
+    }
+
     // On supprime tous les matches
     await Bracket.deleteMany({ tableau: req.params.tableau, phase: req.params.phase})
 
@@ -139,6 +171,7 @@ exports.generateBracket = async (req, res) => {
     let nbQualified = 0, nbRounds, rankOrderer
     if (req.body.poules) poules.forEach(poule => nbQualified += poule.participants.slice(NB_PARTICIPANTS_PHASES_FINALES[req.params.phase].premier, NB_PARTICIPANTS_PHASES_FINALES[req.params.phase].deuxieme).length)
     else nbQualified = poules.length
+    nbQualified += listPerdants.length
 
     if (nbQualified > 64){
       nbRounds = 7
@@ -194,8 +227,7 @@ exports.generateBracket = async (req, res) => {
         await bracket.save()
       }
 
-      let qualified = [], id_match = 1
-
+      let qualified = listPerdants, id_match = 1
       // On créé la liste des joueurs/binômes qualifiés
       if (req.body.poules) {
         for (let i = 0; i < poules.length; i++) {
@@ -221,13 +253,13 @@ exports.generateBracket = async (req, res) => {
         tableau: req.params.tableau,
         phase: req.params.phase
       }).sort({round: 'desc'})
-      for (let matche of firstRound.matches) {
-        if (!matche.joueurs[1]._id || !matche.joueurs[0]._id) {
+      for (let match of firstRound.matches) {
+        if (!match.joueurs[1]._id || !match.joueurs[0]._id) {
           let winner_id
-          if (!matche.joueurs[1]._id) winner_id = matche.joueurs[0]._id
-          else if (!matche.joueurs[0]._id) winner_id = matche.joueurs[1]._id
+          if (!match.joueurs[1]._id) winner_id = match.joueurs[0]._id
+          else if (!match.joueurs[0]._id) winner_id = match.joueurs[1]._id
 
-          await defineMatchStatusAndWinner(matche.round, req.params.tableau, req.params.phase, matche.id, winner_id)
+          await defineMatchStatusAndWinner(match.round, req.params.tableau, req.params.phase, match.id, winner_id)
         }
       }
       res.status(200).json({message: "No error"})

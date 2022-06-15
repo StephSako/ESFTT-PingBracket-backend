@@ -44,7 +44,17 @@ exports.createTableau = (req, res) => {
 }
 
 exports.editTableau = (req, res) => {
-  Tableau.updateOne({_id: req.params.id_tableau}, {$set: req.body}).then(result => res.status(200).json({message: result})).catch(() => res.status(500).send('Impossible de modifier le tableau'))
+  Binomes.find({tableau: req.params.id_tableau}).then(binomes => {
+
+    // On supprime les joueurs en trop si le maxNumberPlayers a diminué
+    let binomesEnErreur = binomes.filter(binome => binome.joueurs.length > req.body.maxNumberPlayers)
+    for (let i = 0; i < binomesEnErreur.length; i++) {
+      binomesEnErreur[i].joueurs.splice(req.body.maxNumberPlayers)
+      binomesEnErreur[i].save()
+    }
+
+    Tableau.updateOne({_id: req.params.id_tableau}, {$set: req.body}).then(result => res.status(200).json({message: result})).catch(() => res.status(500).send('Impossible de modifier le tableau'))
+  });
 }
 
 exports.unsubscribeInvalidPlayers = (req, res) => {

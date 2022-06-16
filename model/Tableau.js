@@ -7,6 +7,7 @@ const tableauSchema = mongoose.Schema({
   maxNumberPlayers: String,
   poules: Boolean,
   consolante: Boolean,
+  handicap: Boolean,
   age_minimum: Number,
   is_launched: Number,
   nbPoules: Number

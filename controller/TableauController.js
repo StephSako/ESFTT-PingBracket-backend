@@ -33,6 +33,7 @@ exports.createTableau = (req, res) => {
     _id: new mongoose.Types.ObjectId(),
     nom: req.body.nom.toLowerCase(),
     format: req.body.format,
+    handicap: req.body.handicap,
     poules: req.body.poules,
     consolante: req.body.consolante,
     maxNumberPlayers: req.body.maxNumberPlayers,

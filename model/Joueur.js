@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 const joueurSchema = mongoose.Schema({
   _id: mongoose.Types.ObjectId,
   classement: Number,
+  pointage: Boolean,
   nom: String,
   age: Number,
   buffet: Boolean,

@@ -10,7 +10,7 @@ function getPlayers(option){
 }
 
 exports.getPlayer = (req, res) => {
-  Joueur.findById(req.params.id_joueur).populate({path: 'tableaux', options: { sort: { nom: 1 } }}).then(joueur => res.status(200).json(joueur)).catch(() => res.status(500).send('Impossible de récupérer le joueur demandé'))
+  Joueur.findById(req.params.id_player).populate({path: 'tableaux', options: { sort: { nom: 1 } }}).then(joueur => res.status(200).json(joueur)).catch(() => res.status(500).send('Impossible de récupérer le joueur demandé'))
 }
 
 exports.getAllPlayers = (req, res) => {
@@ -50,6 +50,7 @@ exports.subscribePlayer = async (req, res) => {
       _id: new mongoose.Types.ObjectId(),
       nom: req.body.joueur.nom.toUpperCase(),
       age: req.body.joueur.age === 0 ? null : req.body.joueur.age,
+      pointage: false,
       buffet: req.body.joueur.buffet,
       tableaux: req.body.tableaux.map(tableau => tableau._id),
       classement: (req.body.joueur.classement ? req.body.joueur.classement : 0)
@@ -129,11 +130,15 @@ exports.movePlayers = async (req, res) => {
   try {
     await Joueur.updateMany({ tableaux: {
       $all : [req.body.previousTableauId],
-      $nin: [ req.body.newTableauId ] }
+      $nin: [req.body.newTableauId] }
       }, {$push: {tableaux: req.body.newTableauId}})
-    await Joueur.updateMany({ tableaux: { $all : [req.body.previousTableauId]} }, {$pull: {tableaux: {$in: [req.body.previousTableauId]}}})
+    await Joueur.updateMany({ tableaux: { $all : [req.body.previousTableauId]} }, { $pull: { tableaux: { $in: [req.body.previousTableauId] } } })
     res.status(200).json({message: 'Les joueurs ont été déplacés vers un autre tableau'})
   } catch (e) {
     res.status(500).send('Impossible de basculer les joueurs vers un autre tableau')
   }
+}
+
+exports.pointerPlayer = (req, res) => {
+  Joueur.updateOne({_id: req.params.id_player}, {$set: { pointage: req.body.pointage }}).then(() => res.status(200).json(req.body.pointage ? 'Joueur pointé' : 'Joueur non pointé')).catch(() => res.status(500).send('Impossible de pointer le joueur'))
 }

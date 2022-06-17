@@ -3,7 +3,7 @@ const router = express.Router();
 const JoueurController = require("../controller/JoueurController");
 const AuthMiddleware = require("../middleware/auth-middleware");
 
-router.get('/:id_joueur', AuthMiddleware, JoueurController.getPlayer);
+router.get('/:id_player', AuthMiddleware, JoueurController.getPlayer);
 
 router.get('/', AuthMiddleware, JoueurController.getAllPlayers);
 
@@ -22,5 +22,7 @@ router.put('/unsubscribe/:id_player/:tableau', AuthMiddleware, JoueurController.
 router.delete('/delete/:id_player', AuthMiddleware, JoueurController.deletePlayer);
 
 router.put('/move', AuthMiddleware, JoueurController.movePlayers);
+
+router.put('/pointer/:id_player', AuthMiddleware, JoueurController.pointerPlayer);
 
 module.exports = router;

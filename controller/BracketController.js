@@ -237,6 +237,10 @@ exports.generateBracket = async (req, res) => {
         qualified = helper.shuffle(poules.map(binome => binome._id))
       }
 
+      let winnerFirst = qualified.filter((_j, index) => (index % 2 === 0))
+      let winnerSecond = qualified.filter((_j, index) => (index % 2 !== 0))
+      qualified = [winnerFirst, winnerSecond].flat()
+
       // On assigne les matches aux joueurs/binômes
       for (let i = 0; i < rankOrderer.length; i++) {
         await setPlayerSpecificMatch(nbRounds, id_match, qualified[(req.body.format === 'simple' ? rankOrderer[i] - 1 : i)], req.params.tableau, req.params.phase)

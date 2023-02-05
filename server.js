@@ -72,6 +72,7 @@ let LogsRoute = require('./routes/logs.route')
 app.use('/api/logs', LogsRoute)
 
 let port = process.env.PORT || 3000;
-app.listen(port, '0.0.0.0', function () {
-  console.log('Express server listening on port ' + port)
+let ip = process.env.IP || '0.0.0.0';
+app.listen(port, ip, function () {
+  console.log('Express server listening on port ' + port + ' on IP ' + ip)
 })

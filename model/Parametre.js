@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 
 const parametreSchema = mongoose.Schema({
   _id: mongoose.Types.ObjectId,
@@ -8,7 +8,7 @@ const parametreSchema = mongoose.Schema({
   texte_buffet: String,
   texte_fin: String,
   consignes_tableaux: String,
-  open: Boolean
-})
+  open: Boolean,
+});
 
-module.exports = mongoose.model('Parametres', parametreSchema, "Parametres")
+module.exports = mongoose.model("Parametres", parametreSchema, "Parametres");

@@ -1,10 +1,10 @@
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 
 const logsSchema = mongoose.Schema({
   _id: mongoose.Types.ObjectId,
   logs: {
-    type: [String]
-  }
-})
+    type: [String],
+  },
+});
 
-module.exports = mongoose.model('Logs', logsSchema, "Logs")
+module.exports = mongoose.model("Logs", logsSchema, "Logs");

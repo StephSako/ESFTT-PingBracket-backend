@@ -28,7 +28,7 @@ router.delete(
 );
 
 router.put(
-  "/cancel/match/result/:tableau_id/:phase/:match_id/:match_round/:winner_id",
+  "/cancel/match/result/:tableau_id/:phase/:match_id/:match_round/:winner_id/:looser_id",
   AuthMiddleware,
   BracketController.cancelMatchResult
 );

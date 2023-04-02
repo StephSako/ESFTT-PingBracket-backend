@@ -27,4 +27,10 @@ router.delete(
   BracketController.deleteBracket_s
 );
 
+router.put(
+  "/cancel/match/result/:tableau_id/:phase/:match_id/:match_round/:winner_id",
+  AuthMiddleware,
+  BracketController.cancelMatchResult
+);
+
 module.exports = router;

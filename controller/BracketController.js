@@ -387,3 +387,38 @@ exports.deleteBracket_s = (req, res) => {
       res.status(500).send("Impossible de supprimer la consolante demandée")
     );
 };
+
+exports.cancelMatchResult = async (req, res) => {
+  // On définit tous les joueurs non gagnants sur le match à annuler
+  console.error(req.params);
+  await Bracket.updateOne(
+    {
+      tableau: req.params.tableau_id,
+      phase: req.params.phase,
+      "matches.id": req.params.match_id,
+      round: parseInt(req.params.match_round),
+    },
+    {
+      $set: {
+        "matches.$[match].joueurs.$[joueur].winner": false,
+      },
+    },
+    {
+      arrayFilters: [
+        { "match.id": req.params.match_id },
+        { "joueur._id": req.params.winner_id },
+      ],
+    }
+  ).catch(() => res.status(500).send("Impossible d'annuler le match"));
+
+  await Bracket.updateOne(
+    {
+      tableau: req.params.tableau_id,
+      phase: req.params.phase,
+      round: { $lt: parseInt(req.params.match_round) },
+    },
+    { $pull: { "matches.$[].joueurs": { _id: req.params.winner_id } } }
+  );
+
+  res.status(200).json({ message: "Match annulé" });
+};

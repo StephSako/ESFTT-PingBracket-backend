@@ -15,6 +15,7 @@ const bracketSchema = mongoose.Schema(
       {
         id: Number,
         round: Number,
+        isCancelable: Boolean,
         joueurs: [
           {
             _id: {

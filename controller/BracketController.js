@@ -73,6 +73,58 @@ async function setPlayerSpecificMatch(
   );
 }
 
+async function setPreviousMatchCancelableStatus(
+  status,
+  id_round,
+  tableau,
+  phase,
+  id_match
+) {
+  id_round = parseInt(id_round);
+  id_match = parseInt(id_match);
+  let isDemiCancelable = false;
+
+  // On ne peux annuler les demi-finales si la finale et/ou la petite finale sont encore settées
+  if (id_round === 1) {
+    await Bracket.find({
+      round: id_round,
+      tableau: tableau,
+      phase: phase,
+    }).then(
+      (res) =>
+        (isDemiCancelable =
+          res[0].matches.filter((m) => m.isCancelable).length === 0)
+    );
+  }
+
+  if (!(id_round === 1 && !isDemiCancelable && status)) {
+    await Bracket.updateMany(
+      {
+        round: id_round + 1,
+        tableau: tableau,
+        phase: phase,
+      },
+      {
+        $set: {
+          "matches.$[match].isCancelable": status,
+        },
+      },
+      {
+        arrayFilters: [
+          {
+            "match.id": {
+              $in: [
+                id_round !== 1 ? id_match * 2 - 1 : 1,
+                id_round !== 1 ? id_match * 2 : 2,
+              ],
+            },
+          },
+        ],
+      }
+    );
+  }
+}
+
 async function defineMatchStatusAndWinner(
   id_round,
   tableau,
@@ -83,6 +135,7 @@ async function defineMatchStatusAndWinner(
   // On définie :
   // - le joueur cliqué comme gagnant
   // - le match comme "terminé"
+  // - le match comme étant annulable
   await Bracket.updateOne(
     {
       round: id_round,
@@ -93,6 +146,7 @@ async function defineMatchStatusAndWinner(
     {
       $set: {
         "matches.$[match].joueurs.$[joueur].winner": true,
+        "matches.$[match].isCancelable": true,
       },
     },
     {
@@ -100,12 +154,20 @@ async function defineMatchStatusAndWinner(
     }
   );
 
+  // Les matches précédents ne sont plus annulables
+  await setPreviousMatchCancelableStatus(
+    false,
+    id_round,
+    tableau,
+    phase,
+    id_match
+  );
+
   // Pour tous les matches sauf la finale, le gagnant évolue au prochain match
   if (Number(id_round) !== 1) {
     // On définie :
     // - le joueur gagnant dans le prochain match
     // - les perdants des demies vont en match pour la 3ème place
-
     let idNextMatch = id_match;
     if (idNextMatch % 2 !== 0) idNextMatch++;
     idNextMatch = idNextMatch / 2;
@@ -134,15 +196,15 @@ exports.bracketOfSpecificTableau = (req, res) => {
 };
 
 exports.setWinner = async (req, res) => {
-  try {
-    await defineMatchStatusAndWinner(
-      req.params.id_round,
-      req.params.tableau,
-      req.params.phase,
-      req.params.id_match,
-      req.body.winnerId
-    );
+  await defineMatchStatusAndWinner(
+    req.params.id_round,
+    req.params.tableau,
+    req.params.phase,
+    req.params.id_match,
+    req.body.winnerId
+  );
 
+  try {
     // S'il s'agit des demies-finale, on assigne les perdants en petite finale
     if (Number(req.params.id_round) === 2 && req.body.looserId) {
       await setPlayerSpecificMatch(
@@ -290,6 +352,7 @@ exports.generateBracket = async (req, res) => {
           matches.push({
             id: j,
             round: i,
+            isCancelable: false,
             joueurs: [],
           });
         }
@@ -386,4 +449,64 @@ exports.deleteBracket_s = (req, res) => {
     .catch(() =>
       res.status(500).send("Impossible de supprimer la consolante demandée")
     );
+};
+
+exports.cancelMatchResult = async (req, res) => {
+  try {
+    // On défini tous les joueurs non gagnants sur le match à annuler
+    await Bracket.updateOne(
+      {
+        tableau: req.params.tableau_id,
+        phase: req.params.phase,
+        "matches.id": req.params.match_id,
+        round: parseInt(req.params.match_round),
+      },
+      {
+        $set: {
+          "matches.$[match].joueurs.$[joueur].winner": false,
+          "matches.$[match].isCancelable": false,
+        },
+      },
+      {
+        arrayFilters: [
+          { "match.id": req.params.match_id },
+          { "joueur._id": req.params.winner_id },
+        ],
+      }
+    );
+
+    // On supprime le vainqueur du match suivant
+    // On supprime le vainqueur et le perdant de la finale ET de la petite finale si on annule une demi-finale
+    await Bracket.updateMany(
+      {
+        tableau: req.params.tableau_id,
+        phase: req.params.phase,
+        round: { $lt: parseInt(req.params.match_round) },
+      },
+      {
+        $pull: {
+          "matches.$[].joueurs": {
+            _id: {
+              $in:
+                parseInt(req.params.match_round) === 2
+                  ? [req.params.winner_id, req.params.looser_id]
+                  : [req.params.winner_id],
+            },
+          },
+        },
+      }
+    );
+
+    // Les matches précédents deviennent annulables
+    await setPreviousMatchCancelableStatus(
+      true,
+      req.params.match_round,
+      req.params.tableau_id,
+      req.params.phase,
+      req.params.match_id
+    );
+    res.status(200).json({ message: "Match annulé" });
+  } catch (err) {
+    res.status(500).send("Impossible d'annuler le match");
+  }
 };

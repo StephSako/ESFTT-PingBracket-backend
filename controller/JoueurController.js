@@ -27,6 +27,16 @@ exports.getAllPlayers = (req, res) => {
     );
 };
 
+exports.getAllPlayersNames = (req, res) => {
+  getPlayers()
+    .then((joueurs) =>
+      res.status(200).json(joueurs.map((j) => j.nom.toUpperCase()))
+    )
+    .catch(() =>
+      res.status(500).send("Impossible de récupérer tous les noms des joueurs")
+    );
+};
+
 exports.unsubscribedPlayers = (req, res) => {
   getPlayers({ tableaux: { $ne: req.params.tableau } })
     .then((joueurs) => res.status(200).json(joueurs))
@@ -79,10 +89,11 @@ exports.subscribePlayer = async (req, res) => {
     nom: req.body.joueur.nom.toUpperCase(),
   });
   if (searchedJoueur) {
-    await Joueur.updateOne(
-      { nom: req.body.joueur.nom.toUpperCase() },
-      { $push: { tableaux: req.body.tableaux.map((tableau) => tableau._id) } }
-    );
+    res
+      .status(500)
+      .send(
+        "Le joueur '" + req.body.joueur.nom.toUpperCase() + "' est déjà inscrit"
+      );
   } else {
     const joueur = new Joueur({
       _id: new mongoose.Types.ObjectId(),

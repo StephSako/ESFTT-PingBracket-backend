@@ -8,6 +8,12 @@ router.get("/:id_player", AuthMiddleware, JoueurController.getPlayer);
 router.get("/", AuthMiddleware, JoueurController.getAllPlayers);
 
 router.get(
+  "/subscribed/names",
+  AuthMiddleware,
+  JoueurController.getAllPlayersNames
+);
+
+router.get(
   "/unsubscribed/:tableau",
   AuthMiddleware,
   JoueurController.unsubscribedPlayers

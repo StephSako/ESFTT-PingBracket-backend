@@ -157,13 +157,9 @@ exports.changeLaunchState = (req, res) => {
     { $set: { is_launched: req.body.is_launched } }
   )
     .then(() =>
-      res
-        .status(200)
-        .json({
-          message:
-            "Le tableau " +
-            (req.body.is_launched === 0 ? "a été lancé" : "est terminé"),
-        })
+      res.status(200).json({
+        message: "Etat du tableau modifié",
+      })
     )
     .catch(() =>
       res.status(500).send("Impossible de changer l'état du tableau")

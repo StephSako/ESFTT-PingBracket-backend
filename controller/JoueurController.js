@@ -89,11 +89,14 @@ exports.subscribePlayer = async (req, res) => {
     nom: req.body.joueur.nom.toUpperCase(),
   });
   if (searchedJoueur) {
-    res
-      .status(500)
-      .send(
-        "Le joueur '" + req.body.joueur.nom.toUpperCase() + "' est déjà inscrit"
-      );
+    await Joueur.updateOne(
+      { nom: req.body.joueur.nom.toUpperCase() },
+      {
+        $addToSet: {
+          tableaux: req.body.tableaux.map((tableau) => tableau._id),
+        },
+      }
+    );
   } else {
     const joueur = new Joueur({
       _id: new mongoose.Types.ObjectId(),

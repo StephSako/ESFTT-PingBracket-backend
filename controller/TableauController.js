@@ -60,7 +60,10 @@ exports.getSpecific = (req, res) => {
 exports.createTableau = (req, res) => {
   const tableau = new Tableau({
     _id: new mongoose.Types.ObjectId(),
-    nom: req.body.nom.toLowerCase(),
+    nom: req.body.nom
+      .toLowerCase()
+      .trim()
+      .replace(/\s{2,}/g, " "),
     format: req.body.format,
     handicap: req.body.handicap,
     poules: req.body.poules,

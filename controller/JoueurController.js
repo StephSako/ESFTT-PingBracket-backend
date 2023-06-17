@@ -90,7 +90,12 @@ exports.subscribePlayer = async (req, res) => {
   });
   if (searchedJoueur) {
     await Joueur.updateOne(
-      { nom: req.body.joueur.nom.toUpperCase() },
+      {
+        nom: req.body.joueur.nom
+          .toUpperCase()
+          .trim()
+          .replace(/\s{2,}/g, " "),
+      },
       {
         $addToSet: {
           tableaux: req.body.tableaux.map((tableau) => tableau._id),
@@ -100,7 +105,10 @@ exports.subscribePlayer = async (req, res) => {
   } else {
     const joueur = new Joueur({
       _id: new mongoose.Types.ObjectId(),
-      nom: req.body.joueur.nom.toUpperCase(),
+      nom: req.body.joueur.nom
+        .toUpperCase()
+        .trim()
+        .replace(/\s{2,}/g, " "),
       age: req.body.joueur.age === 0 ? null : req.body.joueur.age,
       pointage: false,
       buffet: req.body.joueur.buffet,
@@ -136,7 +144,10 @@ exports.subscribePlayer = async (req, res) => {
 
 exports.editPlayer = (req, res) => {
   const joueur = {
-    nom: req.body.nom.toUpperCase(),
+    nom: req.body.nom
+      .toUpperCase()
+      .trim()
+      .replace(/\s{2,}/g, " "),
     age: req.body.age,
     buffet: req.body.buffet,
     classement: req.body.classement ? req.body.classement : 0,

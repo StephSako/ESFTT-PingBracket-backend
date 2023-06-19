@@ -12,6 +12,8 @@ const tableauSchema = mongoose.Schema(
     age_minimum: Number,
     is_launched: Number,
     nbPoules: Number,
+    palierQualifies: Number,
+    palierConsolantes: Number,
   },
   { _id: false }
 );

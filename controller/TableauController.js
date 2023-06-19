@@ -70,8 +70,10 @@ exports.createTableau = (req, res) => {
     consolante: req.body.consolante,
     maxNumberPlayers: req.body.maxNumberPlayers,
     age_minimum: req.body.age_minimum,
-    is_launched: 0, // 0 = initialisé, 1 = en cours, 2 = terminé
+    is_launched: 0, // 0 = pointage, 1 = poules démarrées, 2 = bracket terminé, 3 = terminé
     nbPoules: req.body.nbPoules,
+    palierQualifies: req.body.palierQualifies,
+    palierConsolantes: req.body.palierConsolantes,
   });
   tableau
     .save()

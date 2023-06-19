@@ -29,21 +29,6 @@ const ORDRE_QUART = [1, 8, 5, 4, 3, 6, 7, 2];
 const ORDRE_DEMI = [1, 4, 3, 2];
 const ORDRE_FINALE = [1, 2];
 
-const NB_PARTICIPANTS_PHASES_FINALES = {
-  finale: {
-    premier: 0,
-    deuxieme: 2,
-  },
-  consolante: {
-    premier: 2,
-    deuxieme: 4,
-  },
-  consolante_bis: {
-    premier: 4,
-    deuxieme: 6,
-  },
-};
-
 // Push player into a specific match
 async function setPlayerSpecificMatch(
   id_round,
@@ -224,13 +209,8 @@ exports.setWinner = async (req, res) => {
 exports.generateBracket = async (req, res) => {
   try {
     let listPerdants = [];
-    // On repêche les perdants seulement pour la consolante et la consolante-bis
-    let parentPhase =
-      req.params.phase === "consolante_bis"
-        ? "consolante"
-        : req.params.phase === "consolante"
-        ? "finale"
-        : null;
+    // On repêche les perdants seulement pour la consolante
+    let parentPhase = req.params.phase === "consolante" ? "finale" : null;
     if (parentPhase !== null) {
       await Bracket.find({ tableau: req.params.tableau, phase: "finale" })
         .sort({ round: -1 })
@@ -314,8 +294,10 @@ exports.generateBracket = async (req, res) => {
       poules.forEach(
         (poule) =>
           (nbQualified += poule.participants.slice(
-            NB_PARTICIPANTS_PHASES_FINALES[req.params.phase].premier,
-            NB_PARTICIPANTS_PHASES_FINALES[req.params.phase].deuxieme
+            req.params.phase === "finale" ? 0 : req.body.palierQualifies,
+            req.params.phase === "finale"
+              ? req.body.palierQualifies
+              : req.body.palierConsolantes
           ).length)
       );
     else nbQualified = poules.length;
@@ -374,13 +356,23 @@ exports.generateBracket = async (req, res) => {
         id_match = 1;
       // On créé la liste des joueurs/binômes qualifiés
       if (req.body.poules) {
+        console.error(
+          req.params.phase === "finale" ? 0 : req.body.palierQualifies
+        );
+        console.error(
+          req.params.phase === "finale"
+            ? req.body.palierQualifies
+            : req.body.palierConsolantes
+        );
         for (let i = 0; i < poules.length; i++) {
           qualified = qualified.concat(
             poules[i].participants.slice(
-              NB_PARTICIPANTS_PHASES_FINALES[req.params.phase].premier,
-              NB_PARTICIPANTS_PHASES_FINALES[req.params.phase].deuxieme
+              req.params.phase === "finale" ? 0 : req.body.palierQualifies,
+              req.params.phase === "finale"
+                ? req.body.palierQualifies
+                : req.body.palierConsolantes
             )
-          ); // Nous qualifions les 2 premiers de la poule en phase finale, les 3ème et 4ème en consolante
+          ); // Nous qualifions les 2 premiers de la poule en phase finale, les 3ème et 4ème en consolante (selon les paramètres)
         }
       } else {
         // Seul le format 'double' peux ne pas avoir de poules

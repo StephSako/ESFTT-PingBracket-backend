@@ -5,7 +5,7 @@ const tableauSchema = mongoose.Schema(
     _id: mongoose.Types.ObjectId,
     nom: String,
     format: String,
-    maxNumberPlayers: String,
+    maxNumberPlayers: Number,
     poules: Boolean,
     consolante: Boolean,
     handicap: Boolean,

@@ -264,7 +264,7 @@ exports.generateBracket = async (req, res) => {
           poule.participants = poule.participants.filter(
             (participant) =>
               participant.joueurs.length >= 2 &&
-              participant.joueurs.length <= parseInt(req.body.maxNumberPlayers)
+              participant.joueurs.length <= req.body.maxNumberPlayers
           );
         });
       } else {
@@ -272,7 +272,7 @@ exports.generateBracket = async (req, res) => {
         poules = poules.filter(
           (binome) =>
             binome.joueurs.length >= 2 &&
-            binome.joueurs.length <= parseInt(req.body.maxNumberPlayers)
+            binome.joueurs.length <= req.body.maxNumberPlayers
         );
       }
     } else if (req.body.format === "simple") {

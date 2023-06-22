@@ -74,6 +74,7 @@ exports.createTableau = (req, res) => {
     nbPoules: req.body.nbPoules,
     palierQualifies: req.body.palierQualifies,
     palierConsolantes: req.body.palierConsolantes,
+    hasChapeau: req.body.hasChapeau,
   });
   tableau
     .save()

@@ -14,6 +14,7 @@ const tableauSchema = mongoose.Schema(
     nbPoules: Number,
     palierQualifies: Number,
     palierConsolantes: Number,
+    hasChapeau: Boolean,
   },
   { _id: false }
 );

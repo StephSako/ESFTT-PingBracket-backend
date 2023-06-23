@@ -234,8 +234,11 @@ exports.generateBracket = async (req, res) => {
             listPerdants = matchesFirstRoundPlayed
               .map((match) => match.joueurs)
               .map((joueurs) => {
-                return joueurs.filter((joueur) => !joueur.winner);
+                return joueurs.filter(
+                  (joueur) => !joueur.winner && joueur._id !== undefined
+                );
               })
+              .filter((match) => match.length > 0)
               .flat()
               .map((perdant) => perdant._id);
 
@@ -356,14 +359,6 @@ exports.generateBracket = async (req, res) => {
         id_match = 1;
       // On créé la liste des joueurs/binômes qualifiés
       if (req.body.poules) {
-        console.error(
-          req.params.phase === "finale" ? 0 : req.body.palierQualifies
-        );
-        console.error(
-          req.params.phase === "finale"
-            ? req.body.palierQualifies
-            : req.body.palierConsolantes
-        );
         for (let i = 0; i < poules.length; i++) {
           qualified = qualified.concat(
             poules[i].participants.slice(

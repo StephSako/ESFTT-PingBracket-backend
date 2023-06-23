@@ -86,26 +86,28 @@ exports.generatePoule = async (req, res) => {
     // Formation des poules
     let j = 0;
     let mode = 0; // 0 = on monte, 1 = on descend
-    let double = false;
+    let double = false; // trigger pour changer le sens du serpent (monter ou descendre)
     for (let i = 0; i < participants.length; i++) {
       poules[j].push(participants[i]._id);
 
-      if (mode === 0) {
-        if (j === poules.length - 1) {
-          if (double) {
-            mode = 1;
-            j--;
-            double = false;
-          } else double = true;
-        } else j++;
-      } else {
-        if (j === 0) {
-          if (double) {
-            mode = 0;
-            j++;
-            double = false;
-          } else double = true;
-        } else j--;
+      if (req.body.nbPoules > 1) {
+        if (mode === 0) {
+          if (j === poules.length - 1) {
+            if (double) {
+              mode = 1;
+              j--;
+              double = false;
+            } else double = true;
+          } else j++;
+        } else {
+          if (j === 0) {
+            if (double) {
+              mode = 0;
+              j++;
+              double = false;
+            } else double = true;
+          } else j--;
+        }
       }
     }
 

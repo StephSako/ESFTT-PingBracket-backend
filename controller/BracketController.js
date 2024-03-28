@@ -359,24 +359,27 @@ exports.generateBracket = async (req, res) => {
         id_match = 1;
       // On créé la liste des joueurs/binômes qualifiés
       if (req.body.poules) {
-        for (let i = 0; i < poules.length; i++) {
-          qualified = qualified.concat(
-            poules[i].participants.slice(
-              req.params.phase === "finale" ? 0 : req.body.palierQualifies,
-              req.params.phase === "finale"
-                ? req.body.palierQualifies
-                : req.body.palierConsolantes
-            )
-          ); // Nous qualifions les 2 premiers de la poule en phase finale, les 3ème et 4ème en consolante (selon les paramètres)
-        }
+        qualified = poules
+          .map((p) => p.participants)
+          .map(
+            (poule) =>
+              poule.filter(
+                (_j, index) =>
+                  index >=
+                    (req.params.phase === "finale"
+                      ? 0
+                      : req.body.palierQualifies) &&
+                  index <
+                    (req.params.phase === "finale"
+                      ? req.body.palierQualifies
+                      : req.body.palierConsolantes)
+              ) // Nous qualifions les 2 premiers de la poule en phase finale, les 3ème et 4ème en consolante (selon les paramètres)
+          )
+          .flat();
       } else {
         // Seul le format 'double' peux ne pas avoir de poules
         qualified = helper.shuffle(poules.map((binome) => binome._id));
       }
-
-      let winnerFirst = qualified.filter((_j, index) => index % 2 === 0);
-      let winnerSecond = qualified.filter((_j, index) => index % 2 !== 0);
-      qualified = [winnerFirst, winnerSecond].flat();
 
       // On assigne les matches aux joueurs/binômes
       for (let i = 0; i < rankOrderer.length; i++) {

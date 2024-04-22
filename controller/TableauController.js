@@ -70,6 +70,7 @@ exports.createTableau = (req, res) => {
     consolante: req.body.consolante,
     maxNumberPlayers: req.body.maxNumberPlayers,
     age_minimum: req.body.age_minimum,
+    type_licence: req.body.type_licence, // 1 = tous, 2 = loisirs, 3 = compétiteurs
     is_launched: 0, // 0 = pointage, 1 = poules démarrées, 2 = bracket terminé, 3 = terminé
     nbPoules: req.body.nbPoules,
     palierQualifies: req.body.palierQualifies,

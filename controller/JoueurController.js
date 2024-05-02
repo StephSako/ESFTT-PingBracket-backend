@@ -181,11 +181,12 @@ exports.unsubscribedPlayer = async (req, res) => {
       });
       if (nbMinBinomesNecessaires % 2 !== 0) nbMinBinomesNecessaires++;
       nbMinBinomesNecessaires /= 2;
-      if (nbBinomes > nbMinBinomesNecessaires)
+      if (nbBinomes > nbMinBinomesNecessaires) {
         await Binome.deleteOne({
           tableau: req.params.tableau,
           joueurs: { $exists: true, $size: 0 },
         });
+      }
     }
     res.status(200).json({ message: "Joueur désinscrit du tableau" });
   } catch (e) {
@@ -211,6 +212,22 @@ exports.deletePlayer = async (req, res) => {
     {},
     { $pull: { joueurs: { $in: [req.params.id_player] } } }
   );
+
+  // On supprime le premier binôme vide en trop du tableau
+  let nbMinBinomesNecessaires = await Joueur.countDocuments({
+    tableaux: { $all: [req.params.tableau] },
+  });
+  let nbBinomes = await Binome.countDocuments({
+    tableau: req.params.tableau,
+  });
+  if (nbMinBinomesNecessaires % 2 !== 0) nbMinBinomesNecessaires++;
+  nbMinBinomesNecessaires /= 2;
+  if (nbBinomes > nbMinBinomesNecessaires) {
+    await Binome.deleteOne({
+      tableau: req.params.tableau,
+      joueurs: { $exists: true, $size: 0 },
+    });
+  }
 
   // On le supprime définitivement
   Joueur.deleteOne({ _id: req.params.id_player })

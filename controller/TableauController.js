@@ -101,10 +101,43 @@ exports.editTableau = (req, res) => {
 };
 
 exports.unsubscribeInvalidPlayers = (req, res) => {
-  Joueur.updateMany(
-    { age: { $gte: req.body.age_minimum } },
-    { $pull: { tableaux: { $in: [req.params.id_tableau] } } }
-  )
+  let objUpdaterForTypeLicence = {};
+  if (req.body.type_licence_flag) {
+    if (req.body.type_licence_to_unsubscribe === 2) {
+      objUpdaterForTypeLicence = { $ne: 0 };
+    } else if (req.body.type_licence_to_unsubscribe === 3) {
+      objUpdaterForTypeLicence = { $eq: 0 };
+    }
+  }
+  let objUpdaterForAge = req.body.age_flag
+    ? {
+        $or: [
+          {
+            age: { $gte: req.body.tableau.age_minimum },
+          },
+          {
+            age: { $eq: null },
+          },
+        ],
+      }
+    : {};
+
+  let objUpdater = {};
+  if (req.body.age_flag && !req.body.type_licence_flag) {
+    objUpdater = objUpdaterForAge;
+  } else if (!req.body.age_flag && req.body.type_licence_flag) {
+    objUpdater = {
+      classement: objUpdaterForTypeLicence,
+    };
+  } else if (req.body.age_flag && req.body.type_licence_flag) {
+    objUpdater = {
+      $or: [objUpdaterForAge, { classement: objUpdaterForTypeLicence }],
+    };
+  }
+
+  Joueur.updateMany(objUpdater, {
+    $pull: { tableaux: { $in: [req.params.id_tableau] } },
+  })
     .then((result) => res.status(200).json({ message: result }))
     .catch(() =>
       res.status(500).send("Impossible de désinscrire les joueurs invalides")

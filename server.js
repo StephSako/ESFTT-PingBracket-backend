@@ -76,6 +76,9 @@ app.use("/api/stock", StockRoute);
 let LogsRoute = require("./routes/logs.route");
 app.use("/api/logs", LogsRoute);
 
+let ParisRoute = require("./routes/pari.route");
+app.use("/api/paris", ParisRoute);
+
 let port = process.env.PORT || 3000;
 let ip = process.env.IP || "0.0.0.0";
 app.listen(port, ip, function () {

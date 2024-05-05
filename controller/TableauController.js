@@ -71,11 +71,12 @@ exports.createTableau = (req, res) => {
     maxNumberPlayers: req.body.maxNumberPlayers,
     age_minimum: req.body.age_minimum,
     type_licence: req.body.type_licence, // 1 = tous, 2 = loisirs, 3 = compétiteurs
-    is_launched: 0, // 0 = pointage, 1 = poules démarrées, 2 = bracket terminé, 3 = terminé
+    is_launched: 0, // 0 = pointage, 1 = poules démarrées, 2 = bracket démarré, 3 = terminé
     nbPoules: req.body.nbPoules,
     palierQualifies: req.body.palierQualifies,
     palierConsolantes: req.body.palierConsolantes,
     hasChapeau: req.body.hasChapeau,
+    pariable: req.body.pariable,
   });
   tableau
     .save()
@@ -203,5 +204,21 @@ exports.changeLaunchState = (req, res) => {
     )
     .catch(() =>
       res.status(500).send("Impossible de changer l'état du tableau")
+    );
+};
+
+exports.pariableTableaux = (req, res) => {
+  Tableau.find({
+    pariable: true,
+    is_launched: 2,
+  })
+    .sort({ nom: "asc" })
+    .then((tableaux) => res.status(200).json(tableaux))
+    .catch(() =>
+      res
+        .status(500)
+        .send(
+          "Impossible de récupérer les tableaux dont les paris sont ouverts et dont les phases finales ont démarré"
+        )
     );
 };

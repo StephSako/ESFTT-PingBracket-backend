@@ -9,6 +9,19 @@ exports.getAll = (req, res) => {
     );
 };
 
+exports.getAllJoueur = (req, res) => {
+  Pari.findOne({ id_pronostiqueur: req.params.id_parieur })
+    .then((paris) => res.status(200).json(paris))
+    .catch(() =>
+      res
+        .status(500)
+        .send(
+          "Impossible de récupérer les paris du parieur " +
+            req.params.id_parieur
+        )
+    );
+};
+
 exports.bet = (req, res) => {
   const pari = new Pari({
     _id: new mongoose.Types.ObjectId(),
@@ -22,17 +35,23 @@ exports.bet = (req, res) => {
     .catch(() => res.status(500).send("Impossible de créer le pari"));
 };
 
-//TODO
-exports.update = async (req, res) => {
-  let paris = await Pari.findOne();
+exports.addPariFromMatch = async (req, res) => {
   Pari.updateOne(
-    { _id: paris._id },
+    { _id: req.body.pariFromMatch._id },
     {
-      $push: { paris: req.body.log },
+      $push: {
+        paris: {
+          id_gagnant: req.body.pariFromMatch.id_gagnant,
+          id_tableau: req.body.pariFromMatch.id_tableau,
+          phase: req.body.pariFromMatch.phase,
+          round: req.body.pariFromMatch.round,
+          id_match: req.body.pariFromMatch.id_match,
+        },
+      },
     }
   )
-    .then(() => res.status(200).json({ message: "Pari modifié" }))
-    .catch(() => res.status(500).send("Impossible de modifier le pari"));
+    .then(() => res.status(200).json({ message: "Pari réalisé" }))
+    .catch(() => res.status(500).send("Impossible de parier sur le match"));
 };
 
 exports.cancel = async (req, res) => {

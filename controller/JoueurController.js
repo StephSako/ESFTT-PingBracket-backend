@@ -57,6 +57,29 @@ exports.subscribedPlayersOfSpecificTableau = (req, res) => {
     );
 };
 
+exports.checkIdParieur = (req, res) => {
+  Joueur.find({
+    $where:
+      new RegExp("^.*" + req.params.id_parieur + "$") + ".test(this._id.str)",
+  })
+    .then((joueurs) => {
+      if (joueurs.length === 0)
+        res
+          .status(401)
+          .json("Aucun compte ne correspond à l'identifiant renseigné");
+      else if (joueurs.length > 1)
+        res
+          .status(401)
+          .json(
+            "Le code est partagé par plusieurs comptes : signalez-le à la table de marquage"
+          );
+      else res.status(200).json(joueurs[0]);
+    })
+    .catch(() =>
+      res.status(500).send("Impossible de récupérer le parieur demandé")
+    );
+};
+
 exports.unassignedPlayersBinomes = async (req, res) => {
   let assignedPlayers = await Binome.find({
     tableau: req.params.tableau,

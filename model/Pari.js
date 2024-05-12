@@ -3,10 +3,6 @@ const mongoose = require("mongoose");
 const pariSchema = mongoose.Schema(
   {
     _id: mongoose.Types.ObjectId,
-    tableau: {
-      type: mongoose.Types.ObjectId,
-      ref: "Tableaux",
-    },
     id_pronostiqueur: {
       type: mongoose.Types.ObjectId,
       ref: "Joueurs",
@@ -21,10 +17,11 @@ const pariSchema = mongoose.Schema(
           type: mongoose.Types.ObjectId,
           ref: "Joueurs",
         },
-        id_bracket: {
+        id_tableau: {
           type: mongoose.Types.ObjectId,
-          ref: "Brackets",
+          ref: "Tableaux",
         },
+        phase: String,
         id_match: Number,
         round: Number,
       },

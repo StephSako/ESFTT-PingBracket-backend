@@ -210,7 +210,9 @@ exports.changeLaunchState = (req, res) => {
 exports.pariableTableaux = (req, res) => {
   Tableau.find({
     pariable: true,
-    is_launched: 2,
+    is_launched: {
+      $gte: 2,
+    },
   })
     .sort({ nom: "asc" })
     .then((tableaux) => res.status(200).json(tableaux))

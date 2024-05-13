@@ -1,3 +1,4 @@
+const Pari = require("../model/Pari");
 const Joueur = require("../model/Joueur");
 const Poule = require("../model/Poule");
 const Binome = require("../model/Binome");
@@ -60,20 +61,51 @@ exports.subscribedPlayersOfSpecificTableau = (req, res) => {
 exports.checkIdParieur = (req, res) => {
   Joueur.find({
     $where:
-      new RegExp("^.*" + req.params.id_parieur + "$") + ".test(this._id.str)",
+      new RegExp("^.{20}" + req.params.id_parieur + "$") +
+      ".test(this._id.str)",
   })
     .then((joueurs) => {
       if (joueurs.length === 0)
         res
-          .status(401)
+          .status(400)
           .json("Aucun compte ne correspond à l'identifiant renseigné");
       else if (joueurs.length > 1)
         res
-          .status(401)
+          .status(400)
           .json(
-            "Le code est partagé par plusieurs comptes : signalez-le à la table de marquage"
+            "Cet identifiant est partagé par plusieurs comptes : signalez-le à la table de marquage"
           );
-      else res.status(200).json(joueurs[0]);
+      else {
+        const parieur = joueurs[0];
+        Pari.find({ id_pronostiqueur: parieur._id })
+          .then((fichePari) => {
+            if (fichePari.length === 0) {
+              const pari = new Pari({
+                _id: new mongoose.Types.ObjectId(),
+                id_pronostiqueur: parieur._id,
+                id_prono_vainqueur: null,
+                paris: [],
+              });
+              pari
+                .save()
+                .then((r) => {
+                  res.status(200).json(parieur);
+                })
+                .catch(() =>
+                  res
+                    .status(500)
+                    .send("Impossible de créer la fiche du parieur")
+                );
+            } else {
+              res.status(200).json(parieur);
+            }
+          })
+          .catch(() =>
+            res
+              .status(500)
+              .send("Impossible de récupérer la fiche parieur demandée")
+          );
+      }
     })
     .catch(() =>
       res.status(500).send("Impossible de récupérer le parieur demandé")

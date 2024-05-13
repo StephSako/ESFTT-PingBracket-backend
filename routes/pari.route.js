@@ -7,15 +7,13 @@ router.get("/", AuthMiddleware, ParisController.getAll);
 
 router.get("/:id_parieur", AuthMiddleware, ParisController.getAllJoueur);
 
-router.post("/create", AuthMiddleware, ParisController.bet);
-
 router.post(
-  "/addPariFromMatch",
+  "/addPariFromMatch/:fiche_pari_id",
   AuthMiddleware,
   ParisController.addPariFromMatch
 );
 
-router.delete("/cancel/:id_pari", AuthMiddleware, ParisController.cancel);
+router.put("/cancel/:fiche_pari_id", AuthMiddleware, ParisController.cancel);
 
 router.delete("/deleteAll", AuthMiddleware, ParisController.deleteAll);
 

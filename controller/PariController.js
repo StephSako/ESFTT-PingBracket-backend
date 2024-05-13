@@ -1,5 +1,4 @@
 const Pari = require("../model/Pari");
-const mongoose = require("mongoose");
 
 exports.getAll = (req, res) => {
   Pari.find()
@@ -22,22 +21,9 @@ exports.getAllJoueur = (req, res) => {
     );
 };
 
-exports.bet = (req, res) => {
-  const pari = new Pari({
-    _id: new mongoose.Types.ObjectId(),
-    id_pronostiqueur: req.body.pari.id_pronostiqueur,
-    id_prono_vainqueur: req.body.pari.id_prono_vainqueur,
-    paris: req.body.pari.paris,
-  });
-  pari
-    .save()
-    .then((result) => res.status(200).json(result))
-    .catch(() => res.status(500).send("Impossible de créer le pari"));
-};
-
 exports.addPariFromMatch = async (req, res) => {
   Pari.updateOne(
-    { _id: req.body.pariFromMatch._id },
+    { _id: req.params.fiche_pari_id },
     {
       $push: {
         paris: {
@@ -55,7 +41,20 @@ exports.addPariFromMatch = async (req, res) => {
 };
 
 exports.cancel = async (req, res) => {
-  Pari.deleteOne({ _id: req.params.id_pari })
+  Pari.updateOne(
+    { _id: req.params.fiche_pari_id },
+    {
+      $pull: {
+        paris: {
+          id_tableau: req.body.pariMatch.id_tableau,
+          phase: req.body.pariMatch.phase,
+          round: req.body.pariMatch.round,
+          id_match: req.body.pariMatch.id_match,
+          id_gagnant: req.body.pariMatch.id_gagnant,
+        },
+      },
+    }
+  )
     .then(() => res.status(200).json({ message: "Pari annulé" }))
     .catch(() => res.status(500).send("Impossible d'annuler le pari"));
 };

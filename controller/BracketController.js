@@ -92,6 +92,7 @@ async function setPreviousMatchCancelableStatus(
       {
         $set: {
           "matches.$[match].isCancelable": status,
+          "matches.$[match].isLockToBets": status,
         },
       },
       {
@@ -132,6 +133,7 @@ async function defineMatchStatusAndWinner(
       $set: {
         "matches.$[match].joueurs.$[joueur].winner": true,
         "matches.$[match].isCancelable": true,
+        "matches.$[match].isLockToBets": true,
       },
     },
     {
@@ -338,6 +340,7 @@ exports.generateBracket = async (req, res) => {
             id: j,
             round: i,
             isCancelable: false,
+            isLockToBets: false,
             joueurs: [],
           });
         }
@@ -455,6 +458,7 @@ exports.cancelMatchResult = async (req, res) => {
         $set: {
           "matches.$[match].joueurs.$[joueur].winner": false,
           "matches.$[match].isCancelable": false,
+          "matches.$[match].isLockToBets": false,
         },
       },
       {
@@ -499,4 +503,33 @@ exports.cancelMatchResult = async (req, res) => {
   } catch (err) {
     res.status(500).send("Impossible d'annuler le match");
   }
+};
+
+exports.lockMatchToBets = async (req, res) => {
+  Bracket.updateOne(
+    {
+      round: parseInt(req.params.match_round),
+      tableau: req.params.tableau_id,
+      phase: req.params.phase,
+      "matches.id": parseInt(req.params.match_id),
+    },
+    {
+      $set: {
+        "matches.$[match].isLockToBets": !req.body.isLocked,
+      },
+    },
+    {
+      arrayFilters: [{ "match.id": parseInt(req.params.match_id) }],
+    }
+  )
+    .then(() => res.status(200).json({ message: "OK" }))
+    .catch(() =>
+      res
+        .status(500)
+        .send(
+          "Impossible de " +
+            (req.body.isLocked ? "déverrouiller" : "verrouiller") +
+            " les paris du match"
+        )
+    );
 };

@@ -33,4 +33,10 @@ router.put(
   BracketController.cancelMatchResult
 );
 
+router.put(
+  "/lock-paris/match/:tableau_id/:phase/:match_id/:match_round",
+  AuthMiddleware,
+  BracketController.lockMatchToBets
+);
+
 module.exports = router;

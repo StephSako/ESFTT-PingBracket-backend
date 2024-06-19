@@ -1,6 +1,7 @@
 const Bracket = require("../model/Bracket");
 const Binome = require("../model/Binome");
 const Poule = require("../model/Poule");
+const Pari = require("../model/Pari");
 const mongoose = require("mongoose");
 const helper = require("./Helper");
 
@@ -170,16 +171,42 @@ async function defineMatchStatusAndWinner(
   }
 }
 
-exports.bracketOfSpecificTableau = (req, res) => {
-  Bracket.find({ tableau: req.params.tableau, phase: req.params.phase })
-    .populate("tableau")
-    .populate({
-      path: "matches.joueurs._id",
-      populate: { path: "joueurs" },
+exports.bracketOfSpecificTableau = async (req, res) => {
+  let bracket = {};
+  try {
+    bracket = await Bracket.find({
+      tableau: req.params.tableau,
+      phase: req.params.phase,
     })
-    .sort({ round: "desc" })
-    .then((matches) => res.status(200).json({ rounds: matches }))
-    .catch(() => res.status(500).send("Impossible de récupérer le bracket"));
+      .populate("tableau")
+      .populate({
+        path: "matches.joueurs._id",
+        populate: { path: "joueurs" },
+      })
+      .sort({ round: "desc" });
+  } catch (e) {
+    res.status(500).send("Impossible de récupérer le bracket");
+  }
+
+  let parisJoueur = {};
+  if (req.params.is_pari === "true" && !!req.params.id_parieur) {
+    try {
+      parisJoueur = await Pari.findOne({
+        id_pronostiqueur: req.params.id_parieur,
+      }).populate("id_prono_vainqueur");
+    } catch (e) {
+      res
+        .status(500)
+        .send(
+          "Impossible de récupérer les paris du parieur " +
+            req.params.id_parieur
+        );
+    }
+  }
+
+  res
+    .status(200)
+    .json({ bracket: { rounds: bracket }, parisJoueur: parisJoueur });
 };
 
 exports.setWinner = async (req, res) => {
@@ -498,6 +525,24 @@ exports.cancelMatchResult = async (req, res) => {
       req.params.tableau_id,
       req.params.phase,
       req.params.match_id
+    );
+
+    // On supprime tous les paris de ce match et des matches suivants où le joueur gagnant est présent
+    await Pari.updateMany(
+      {},
+      {
+        $pull: {
+          paris: {
+            id_tableau: req.params.tableau_id,
+            phase: req.params.phase,
+            round: { $lt: parseInt(req.params.match_round) },
+            $or: [
+              { id_gagnant: req.params.winner_id },
+              { id_gagnant: req.params.looser_id },
+            ],
+          },
+        },
+      }
     );
     res.status(200).json({ message: "Match annulé" });
   } catch (err) {

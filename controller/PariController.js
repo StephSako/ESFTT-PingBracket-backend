@@ -1,6 +1,6 @@
 const Pari = require("../model/Pari");
 
-exports.getAll = (req, res) => {
+exports.getAll = (_req, res) => {
   Pari.find()
     .then((paris) => res.status(200).json(paris))
     .catch(() =>
@@ -8,8 +8,10 @@ exports.getAll = (req, res) => {
     );
 };
 
-exports.getAllJoueur = (req, res) => {
+//TODO Calculer le score des paris du joueur
+exports.getParisJoueur = (req, res) => {
   Pari.findOne({ id_pronostiqueur: req.params.id_parieur })
+    .populate("id_prono_vainqueur")
     .then((paris) => res.status(200).json(paris))
     .catch(() =>
       res
@@ -59,10 +61,25 @@ exports.cancel = async (req, res) => {
     .catch(() => res.status(500).send("Impossible d'annuler le pari"));
 };
 
-exports.deleteAll = async (req, res) => {
+exports.deleteAll = async (_req, res) => {
   Pari.deleteMany({})
     .then(() => res.status(200).json({ message: "Paris supprimés" }))
     .catch(() =>
       res.status(500).send("Impossible de supprimer tous les paris")
+    );
+};
+
+exports.parierGagnantTableau = async (req, res) => {
+  Pari.updateOne(
+    { id_pronostiqueur: req.body.id_parieur },
+    {
+      $set: {
+        id_prono_vainqueur: req.body.id_vainqueur,
+      },
+    }
+  )
+    .then(() => res.status(200).json({ message: "Vainqueur défini !" }))
+    .catch(() =>
+      res.status(500).send("Impossible de définir le vainqueur du tableau")
     );
 };

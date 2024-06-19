@@ -5,7 +5,7 @@ const AuthMiddleware = require("../middleware/auth-middleware");
 
 router.get("/", AuthMiddleware, ParisController.getAll);
 
-router.get("/:id_parieur", AuthMiddleware, ParisController.getAllJoueur);
+router.get("/:id_parieur", AuthMiddleware, ParisController.getParisJoueur);
 
 router.post(
   "/addPariFromMatch/:fiche_pari_id",
@@ -16,5 +16,7 @@ router.post(
 router.put("/cancel/:fiche_pari_id", AuthMiddleware, ParisController.cancel);
 
 router.delete("/deleteAll", AuthMiddleware, ParisController.deleteAll);
+
+router.post("/vainqueur", AuthMiddleware, ParisController.parierGagnantTableau);
 
 module.exports = router;

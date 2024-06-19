@@ -17,7 +17,7 @@ router.get(
   TableauController.hostableTableaux
 );
 
-router.get("/pariables", AuthMiddleware, TableauController.pariableTableaux);
+router.get("/pariables", AuthMiddleware, TableauController.pariablesTableaux);
 
 router.get("/:tableau", AuthMiddleware, TableauController.getSpecific);
 

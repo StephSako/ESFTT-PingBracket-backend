@@ -207,20 +207,35 @@ exports.changeLaunchState = (req, res) => {
     );
 };
 
-exports.pariableTableaux = (req, res) => {
-  Tableau.find({
-    pariable: true,
-    is_launched: {
-      $gte: 2,
-    },
-  })
-    .sort({ nom: "asc" })
-    .then((tableaux) => res.status(200).json(tableaux))
-    .catch(() =>
-      res
-        .status(500)
-        .send(
-          "Impossible de récupérer les tableaux dont les paris sont ouverts et dont les phases finales ont démarré"
-        )
-    );
+exports.pariablesTableaux = async (_req, res) => {
+  try {
+    let tableauxPariablesWithJoueurs = [];
+    let tableauxPariables = await Tableau.find({
+      pariable: true,
+      is_launched: {
+        $gte: 1,
+      },
+    }).sort({ nom: "asc" });
+
+    for (let index = 0; index < tableauxPariables.length; index++) {
+      let joueursTableau = await Joueur.find({
+        tableaux: { $all: [tableauxPariables[index]._id] },
+      })
+        .sort({ nom: "asc" })
+        .select(["_id", "nom"]);
+
+      tableauxPariablesWithJoueurs.push({
+        tableau: tableauxPariables[index],
+        participants: joueursTableau,
+      });
+    }
+
+    res.status(200).json(tableauxPariablesWithJoueurs);
+  } catch (e) {
+    res
+      .status(500)
+      .send(
+        "Impossible de récupérer les tableaux dont les paris sont ouverts et dont les phases finales ont démarré"
+      );
+  }
 };

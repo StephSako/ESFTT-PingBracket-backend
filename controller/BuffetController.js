@@ -1,6 +1,6 @@
 const Buffet = require("../model/Buffet");
 
-exports.getBuffet = (req, res) => {
+exports.getBuffet = (_req, res) => {
   Buffet.findOne()
     .then((parametres) => res.status(200).json(parametres))
     .catch(() =>
@@ -16,10 +16,9 @@ exports.platsAlreadyCooked = (req, res) => {
     );
 };
 
-exports.register = async (req, res) => {
-  let buffet = await Buffet.findOne();
+exports.register = (req, res) => {
   Buffet.updateOne(
-    { _id: buffet._id },
+    {},
     {
       $push: { plats: { $each: req.body.plats } },
       $inc: {
@@ -35,13 +34,12 @@ exports.register = async (req, res) => {
 };
 
 exports.edit = async (req, res) => {
-  let logs = await Buffet.findOne();
   const buffet = {
     enfant: req.body.enfant,
     ado_adulte: req.body.ado_adulte,
     plats: req.body.plats,
   };
-  Buffet.updateOne({ _id: logs._id }, { $set: buffet })
+  Buffet.updateOne({}, { $set: buffet })
     .then(() => res.status(200).json({ message: "Buffet modifié" }))
     .catch(() => res.status(500).send("Impossible de modifier le buffet"));
 };

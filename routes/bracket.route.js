@@ -4,7 +4,7 @@ const BracketController = require("../controller/BracketController");
 const AuthMiddleware = require("../middleware/auth-middleware");
 
 router.get(
-  "/:tableau/:phase",
+  "/:tableau/:phase/:is_pari/:id_parieur",
   AuthMiddleware,
   BracketController.bracketOfSpecificTableau
 );

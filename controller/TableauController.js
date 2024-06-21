@@ -77,6 +77,11 @@ exports.createTableau = (req, res) => {
     palierConsolantes: req.body.palierConsolantes,
     hasChapeau: req.body.hasChapeau,
     pariable: req.body.pariable,
+    consolantePariable: req.body.consolantePariable,
+    ptsGagnesParisWB: req.body.ptsGagnesParisWB,
+    ptsPerdusParisWB: req.body.ptsPerdusParisWB,
+    ptsGagnesParisLB: req.body.ptsGagnesParisLB,
+    ptsPerdusParisLB: req.body.ptsPerdusParisLB,
   });
   tableau
     .save()

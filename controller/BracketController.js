@@ -93,7 +93,7 @@ async function setPreviousMatchCancelableStatus(
       {
         $set: {
           "matches.$[match].isCancelable": status,
-          "matches.$[match].isLockToBets": status,
+          "matches.$[match].isLockToBets": true,
         },
       },
       {
@@ -430,25 +430,28 @@ exports.generateBracket = async (req, res) => {
       }
 
       // Si des joueurs/binômes sont seuls au premier round, ils sont désignés vainqueurs et accèdent au second round
-      let firstRound = await Bracket.findOne({
+      let firstRoundMatchesAlone = await Bracket.findOne({
         tableau: req.params.tableau,
         phase: req.params.phase,
       }).sort({ round: "desc" });
-      for (let match of firstRound.matches) {
-        if (!match.joueurs[1]._id || !match.joueurs[0]._id) {
-          let winner_id;
-          if (!match.joueurs[1]._id) winner_id = match.joueurs[0]._id;
-          else if (!match.joueurs[0]._id) winner_id = match.joueurs[1]._id;
+      firstRoundMatchesAlone = firstRoundMatchesAlone.matches.filter(
+        (match) => match.joueurs.filter((joueur) => !joueur._id).length === 1
+      );
 
-          await defineMatchStatusAndWinner(
-            match.round,
-            req.params.tableau,
-            req.params.phase,
-            match.id,
-            winner_id
-          );
-        }
+      for (let match of firstRoundMatchesAlone) {
+        let winner_id;
+        if (!match.joueurs[1]._id) winner_id = match.joueurs[0]._id;
+        else if (!match.joueurs[0]._id) winner_id = match.joueurs[1]._id;
+
+        await defineMatchStatusAndWinner(
+          match.round,
+          req.params.tableau,
+          req.params.phase,
+          match.id,
+          winner_id
+        );
       }
+
       res.status(200).json({ message: "No error" });
     } else
       res

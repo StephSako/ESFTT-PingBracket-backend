@@ -8,7 +8,6 @@ exports.getAll = (_req, res) => {
     );
 };
 
-//TODO Calculer le score des paris du joueur
 exports.getParisJoueur = (req, res) => {
   Pari.findOne({ id_pronostiqueur: req.params.id_parieur })
     .populate("id_prono_vainqueur")
@@ -61,15 +60,49 @@ exports.cancel = async (req, res) => {
     .catch(() => res.status(500).send("Impossible d'annuler le pari"));
 };
 
-exports.deleteAll = async (_req, res) => {
-  Pari.deleteMany({})
-    .then(() => res.status(200).json({ message: "Paris supprimés" }))
+exports.deleteParisPhase = (req, res) => {
+  let filter =
+    req.params.phase === "null"
+      ? {
+          id_tableau: req.params.id_tableau,
+        }
+      : {
+          id_tableau: req.params.id_tableau,
+          phase: req.params.phase,
+        };
+  Pari.updateMany(
+    // On supprime les paris du tableau et de la phase demandés
+    {},
+    {
+      $pull: {
+        paris: filter,
+      },
+    }
+  )
+    .then(() =>
+      res.status(200).json({
+        message:
+          "Paris supprimés du tableau '" +
+          req.params.id_tableau +
+          "' pour la phase '" +
+          req.params.phase +
+          "'",
+      })
+    )
     .catch(() =>
-      res.status(500).send("Impossible de supprimer tous les paris")
+      res
+        .status(500)
+        .send(
+          "Impossible de supprimer les paris du tableau '" +
+            req.params.id_tableau +
+            "' pour la phase '" +
+            req.params.phase +
+            "'"
+        )
     );
 };
 
-exports.parierGagnantTableau = async (req, res) => {
+exports.parierGagnantTableau = (req, res) => {
   Pari.updateOne(
     { id_pronostiqueur: req.body.id_parieur },
     {

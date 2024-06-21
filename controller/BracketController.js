@@ -1,6 +1,7 @@
 const Bracket = require("../model/Bracket");
 const Binome = require("../model/Binome");
 const Poule = require("../model/Poule");
+const Tableau = require("../model/Tableau");
 const Pari = require("../model/Pari");
 const mongoose = require("mongoose");
 const helper = require("./Helper");
@@ -204,9 +205,25 @@ exports.bracketOfSpecificTableau = async (req, res) => {
     }
   }
 
-  res
-    .status(200)
-    .json({ bracket: { rounds: bracket }, parisJoueur: parisJoueur });
+  let tableauxPariables = {};
+  if (req.params.is_pari === "true") {
+    try {
+      tableauxPariables = await Tableau.find({
+        pariable: true,
+        is_launched: {
+          $gte: 1,
+        },
+      }).sort({ nom: "asc" });
+    } catch (e) {
+      res.status(500).send("Impossible de récupérer les tableaux pariables");
+    }
+  }
+
+  res.status(200).json({
+    bracket: { rounds: bracket },
+    parisJoueur: parisJoueur,
+    tableauxPariables: tableauxPariables,
+  });
 };
 
 exports.setWinner = async (req, res) => {

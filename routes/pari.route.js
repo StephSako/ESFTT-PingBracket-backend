@@ -15,7 +15,11 @@ router.post(
 
 router.put("/cancel/:fiche_pari_id", AuthMiddleware, ParisController.cancel);
 
-router.delete("/deleteAll", AuthMiddleware, ParisController.deleteAll);
+router.delete(
+  "/delete/:id_tableau/:phase",
+  AuthMiddleware,
+  ParisController.deleteParisPhase
+);
 
 router.post("/vainqueur", AuthMiddleware, ParisController.parierGagnantTableau);
 

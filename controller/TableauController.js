@@ -182,6 +182,20 @@ exports.deleteTableau = async (req, res) => {
       { $pull: { tableaux: { $in: [req.params.tableau_id] } } }
     );
     await Tableau.deleteOne({ _id: req.params.tableau_id });
+
+    // Supprime les paris du tableau si pariable
+    if (req.body.pariable || req.body.consolantePariable) {
+      await Pari.updateMany(
+        {},
+        {
+          $pull: {
+            paris: {
+              id_tableau: req.params.tableau_id,
+            },
+          },
+        }
+      );
+    }
     res.status(200).json({ message: "Tableau supprimé" });
   } catch (e) {
     res.status(500).send("Impossible de supprimer le tableau demandé");

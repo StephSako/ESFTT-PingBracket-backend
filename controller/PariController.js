@@ -15,10 +15,13 @@ exports.getGeneralResult = async (_req, res) => {
       (bracket) => bracket.tableau.pariable && bracket.tableau.is_launched >= 1
     );
 
-    let parisJoueurs = await Pari.find().populate(
-      "id_pronostiqueur",
-      "_id nom"
-    );
+    let parisJoueurs = await Pari.find()
+      .populate("id_pronostiqueur", "_id nom")
+      .populate({
+        path: "paris.id_tableau",
+        populate: { path: "paris" },
+        select: "_id nom",
+      });
 
     res.status(200).json({ brackets: brackets, parisJoueurs: parisJoueurs });
   } catch (e) {
@@ -30,6 +33,11 @@ exports.getParisJoueur = (req, res) => {
   Pari.findOne({ id_pronostiqueur: req.params.id_parieur })
     .populate("id_prono_vainqueur")
     .populate("id_pronostiqueur", "_id nom")
+    .populate({
+      path: "paris.id_tableau",
+      populate: { path: "paris" },
+      select: "_id nom",
+    })
     .then((paris) => res.status(200).json(paris))
     .catch(() =>
       res

@@ -194,7 +194,13 @@ exports.bracketOfSpecificTableau = async (req, res) => {
     try {
       parisJoueur = await Pari.findOne({
         id_pronostiqueur: req.params.id_parieur,
-      }).populate("id_prono_vainqueur");
+      })
+        .populate("id_prono_vainqueur")
+        .populate({
+          path: "paris.id_tableau",
+          populate: { path: "paris" },
+          select: "_id nom",
+        });
     } catch (e) {
       res
         .status(500)

@@ -88,7 +88,7 @@ exports.checkIdParieur = (req, res) => {
               });
               pari
                 .save()
-                .then((r) => {
+                .then(() => {
                   res.status(200).json(parieur);
                 })
                 .catch(() =>

@@ -1,23 +1,41 @@
 const Pari = require("../model/Pari");
+const Tableau = require("../model/Tableau");
+const Bracket = require("../model/Bracket");
 
-exports.getAll = (_req, res) => {
-  Pari.find()
-    .then((paris) => res.status(200).json(paris))
-    .catch(() =>
-      res.status(500).send("Impossible de récupérer les paris des tableaux")
+exports.getGeneralResult = async (_req, res) => {
+  try {
+    let brackets = await Bracket.find()
+      .populate({
+        path: "matches.joueurs._id",
+        populate: { path: "joueurs" },
+      })
+      .populate("tableau");
+
+    brackets = brackets.filter(
+      (bracket) => bracket.tableau.pariable && bracket.tableau.is_launched >= 1
     );
+
+    let parisJoueurs = await Pari.find().populate(
+      "id_pronostiqueur",
+      "_id nom"
+    );
+
+    res.status(200).json({ brackets: brackets, parisJoueurs: parisJoueurs });
+  } catch (e) {
+    res.status(500).send("Impossible de générer les classements des paris");
+  }
 };
 
 exports.getParisJoueur = (req, res) => {
   Pari.findOne({ id_pronostiqueur: req.params.id_parieur })
     .populate("id_prono_vainqueur")
+    .populate("id_pronostiqueur", "_id nom")
     .then((paris) => res.status(200).json(paris))
     .catch(() =>
       res
         .status(500)
         .send(
-          "Impossible de récupérer les paris du parieur " +
-            req.params.id_parieur
+          "Impossible de récupérer les paris du joueur " + req.params.id_parieur
         )
     );
 };

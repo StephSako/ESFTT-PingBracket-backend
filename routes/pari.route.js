@@ -3,7 +3,7 @@ const router = express.Router();
 const ParisController = require("../controller/PariController");
 const AuthMiddleware = require("../middleware/auth-middleware");
 
-router.get("/", AuthMiddleware, ParisController.getAll);
+router.get("/", AuthMiddleware, ParisController.getGeneralResult);
 
 router.get("/:id_parieur", AuthMiddleware, ParisController.getParisJoueur);
 

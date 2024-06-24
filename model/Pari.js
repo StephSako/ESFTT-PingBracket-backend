@@ -7,10 +7,21 @@ const pariSchema = mongoose.Schema(
       type: mongoose.Types.ObjectId,
       ref: "Joueurs",
     },
-    id_prono_vainqueur: {
-      type: mongoose.Types.ObjectId,
-      ref: "Joueurs",
-    },
+    pronos_vainqueurs: [
+      {
+        id_gagnant: {
+          type: mongoose.Types.ObjectId,
+          ref: "Joueurs",
+        },
+        id_tableau: {
+          type: mongoose.Types.ObjectId,
+          ref: "Tableaux",
+        },
+        phase: String,
+        id_match: Number,
+        round: Number,
+      },
+    ],
     paris: [
       {
         id_gagnant: {

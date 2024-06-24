@@ -83,7 +83,7 @@ exports.checkIdParieur = (req, res) => {
               const pari = new Pari({
                 _id: new mongoose.Types.ObjectId(),
                 id_pronostiqueur: parieur._id,
-                id_prono_vainqueur: null,
+                pronos_vainqueurs: [],
                 paris: [],
               });
               pari

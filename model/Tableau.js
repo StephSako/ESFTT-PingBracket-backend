@@ -18,6 +18,8 @@ const tableauSchema = mongoose.Schema(
     hasChapeau: Boolean,
     pariable: Boolean,
     consolantePariable: Boolean,
+    ptsGagnesParisVainqueur: Number,
+    ptsPerdusParisVainqueur: Number,
     ptsGagnesParisWB: Number,
     ptsPerdusParisWB: Number,
     ptsGagnesParisLB: Number,

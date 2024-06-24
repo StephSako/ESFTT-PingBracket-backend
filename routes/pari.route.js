@@ -21,6 +21,10 @@ router.delete(
   ParisController.deleteParisPhase
 );
 
-router.post("/vainqueur", AuthMiddleware, ParisController.parierGagnantTableau);
+router.post(
+  "/vainqueur/:id_tableau/:id_gagnant",
+  AuthMiddleware,
+  ParisController.parierGagnantTableau
+);
 
 module.exports = router;

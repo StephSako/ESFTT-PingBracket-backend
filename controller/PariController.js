@@ -16,6 +16,11 @@ exports.getGeneralResult = async (_req, res) => {
     );
 
     let parisJoueurs = await Pari.find()
+      .populate({
+        path: "pronos_vainqueurs.id_gagnant",
+        populate: { path: "pronos_vainqueurs" },
+        select: "_id nom",
+      })
       .populate("id_pronostiqueur", "_id nom")
       .populate({
         path: "paris.id_tableau",
@@ -31,7 +36,11 @@ exports.getGeneralResult = async (_req, res) => {
 
 exports.getParisJoueur = (req, res) => {
   Pari.findOne({ id_pronostiqueur: req.params.id_parieur })
-    .populate("id_prono_vainqueur")
+    .populate({
+      path: "pronos_vainqueurs.id_gagnant",
+      populate: { path: "pronos_vainqueurs" },
+      select: "_id nom",
+    })
     .populate("id_pronostiqueur", "_id nom")
     .populate({
       path: "paris.id_tableau",
@@ -128,17 +137,36 @@ exports.deleteParisPhase = (req, res) => {
     );
 };
 
-exports.parierGagnantTableau = (req, res) => {
-  Pari.updateOne(
-    { id_pronostiqueur: req.body.id_parieur },
-    {
-      $set: {
-        id_prono_vainqueur: req.body.id_vainqueur,
-      },
+exports.parierGagnantTableau = async (req, res) => {
+  try {
+    if (req.body.creation_prono_vainqueur) {
+      await Pari.updateOne(
+        { id_pronostiqueur: req.body.id_parieur },
+        {
+          $push: {
+            pronos_vainqueurs: {
+              id_tableau: req.params.id_tableau,
+              id_gagnant: req.params.id_gagnant,
+            },
+          },
+        }
+      );
+    } else {
+      await Pari.updateOne(
+        { id_pronostiqueur: req.body.id_parieur },
+        {
+          $set: {
+            "pronos_vainqueurs.$[tableau].id_gagnant": req.params.id_gagnant,
+          },
+        },
+        {
+          arrayFilters: [{ "tableau.id_tableau": req.params.id_tableau }],
+        }
+      );
     }
-  )
-    .then(() => res.status(200).json({ message: "Vainqueur défini !" }))
-    .catch(() =>
-      res.status(500).send("Impossible de définir le vainqueur du tableau")
-    );
+
+    res.status(200).json({ message: "Vainqueur du tableau défini" });
+  } catch (e) {
+    res.status(500).send("Impossible de définir le vainqueur du tableau");
+  }
 };

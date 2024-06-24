@@ -79,6 +79,8 @@ exports.createTableau = (req, res) => {
     hasChapeau: req.body.hasChapeau,
     pariable: req.body.pariable,
     consolantePariable: req.body.consolantePariable,
+    ptsGagnesParisVainqueur: req.body.ptsGagnesParisVainqueur,
+    ptsPerdusParisVainqueur: req.body.ptsPerdusParisVainqueur,
     ptsGagnesParisWB: req.body.ptsGagnesParisWB,
     ptsPerdusParisWB: req.body.ptsPerdusParisWB,
     ptsGagnesParisLB: req.body.ptsGagnesParisLB,
@@ -184,12 +186,15 @@ exports.deleteTableau = async (req, res) => {
     await Tableau.deleteOne({ _id: req.params.tableau_id });
 
     // Supprime les paris du tableau si pariable
-    if (req.body.pariable || req.body.consolantePariable) {
-      await Pari.updateMany(
+    if (req.params.pariable || req.params.consolantePariable) {
+      await Paris.updateMany(
         {},
         {
           $pull: {
             paris: {
+              id_tableau: req.params.tableau_id,
+            },
+            pronos_vainqueurs: {
               id_tableau: req.params.tableau_id,
             },
           },

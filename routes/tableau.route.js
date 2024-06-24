@@ -40,7 +40,7 @@ router.put(
 router.delete("/reset", AuthMiddleware, TableauController.resetTournament);
 
 router.delete(
-  "/delete/:tableau_id/:format/:poules",
+  "/delete/:tableau_id/:format/:poules/:pariable/:consolantePariable",
   AuthMiddleware,
   TableauController.deleteTableau
 );

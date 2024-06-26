@@ -1,5 +1,4 @@
 const Pari = require("../model/Pari");
-const Tableau = require("../model/Tableau");
 const Bracket = require("../model/Bracket");
 
 exports.getGeneralResult = async (_req, res) => {
@@ -23,9 +22,14 @@ exports.getGeneralResult = async (_req, res) => {
       })
       .populate("id_pronostiqueur", "_id nom")
       .populate({
-        path: "paris.id_tableau",
+        path: "paris.id_gagnant",
         populate: { path: "paris" },
         select: "_id nom",
+      })
+      .populate({
+        path: "paris.id_tableau",
+        populate: { path: "paris" },
+        select: "_id nom format",
       });
 
     res.status(200).json({ brackets: brackets, parisJoueurs: parisJoueurs });
@@ -43,9 +47,14 @@ exports.getParisJoueur = (req, res) => {
     })
     .populate("id_pronostiqueur", "_id nom")
     .populate({
-      path: "paris.id_tableau",
+      path: "paris.id_gagnant",
       populate: { path: "paris" },
       select: "_id nom",
+    })
+    .populate({
+      path: "paris.id_tableau",
+      populate: { path: "paris" },
+      select: "_id nom format",
     })
     .then((paris) => res.status(200).json(paris))
     .catch(() =>

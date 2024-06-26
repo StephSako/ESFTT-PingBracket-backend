@@ -59,24 +59,23 @@ exports.subscribedPlayersOfSpecificTableau = (req, res) => {
 };
 
 exports.checkIdParieur = (req, res) => {
-  Joueur.find({
-    $where:
-      new RegExp("^.{20}" + req.params.id_parieur + "$") +
-      ".test(this._id.str)",
-  })
+  Joueur.find()
     .then((joueurs) => {
-      if (joueurs.length === 0)
+      let joueursSearch = joueurs.filter((joueur) =>
+        new RegExp("^.{20}" + req.params.id_parieur + "$").test(joueur._id)
+      );
+      if (joueursSearch.length === 0)
         res
           .status(400)
           .json("Aucun compte ne correspond à l'identifiant renseigné");
-      else if (joueurs.length > 1)
+      else if (joueursSearch.length > 1)
         res
           .status(400)
           .json(
             "Cet identifiant est partagé par plusieurs comptes : signalez-le à la table de marquage"
           );
       else {
-        const parieur = joueurs[0];
+        const parieur = joueursSearch[0];
         Pari.find({ id_pronostiqueur: parieur._id })
           .then((fichePari) => {
             if (fichePari.length === 0) {

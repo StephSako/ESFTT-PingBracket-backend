@@ -16,6 +16,14 @@ const tableauSchema = mongoose.Schema(
     palierQualifies: Number,
     palierConsolantes: Number,
     hasChapeau: Boolean,
+    pariable: Boolean,
+    consolantePariable: Boolean,
+    ptsGagnesParisVainqueur: Number,
+    ptsPerdusParisVainqueur: Number,
+    ptsGagnesParisWB: Number,
+    ptsPerdusParisWB: Number,
+    ptsGagnesParisLB: Number,
+    ptsPerdusParisLB: Number,
   },
   { _id: false }
 );

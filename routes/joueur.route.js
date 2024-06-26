@@ -31,6 +31,12 @@ router.get(
   JoueurController.unassignedPlayersBinomes
 );
 
+router.get(
+  "/check/id_parieur/:id_parieur",
+  AuthMiddleware,
+  JoueurController.checkIdParieur
+);
+
 router.post("/create", AuthMiddleware, JoueurController.subscribePlayer);
 
 router.put("/edit/:id_player", AuthMiddleware, JoueurController.editPlayer);

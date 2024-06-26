@@ -2,7 +2,6 @@ const Poule = require("../model/Poule");
 const Binome = require("../model/Binome");
 const Joueur = require("../model/Joueur");
 const mongoose = require("mongoose");
-const helper = require("./Helper");
 
 exports.getPoules = (req, res) => {
   if (req.params.format === "simple")

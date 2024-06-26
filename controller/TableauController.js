@@ -5,6 +5,7 @@ const Bracket = require("../model/Bracket");
 const Binomes = require("../model/Binome");
 const Logs = require("../model/Logs");
 const Buffet = require("../model/Buffet");
+const Paris = require("../model/Pari");
 const mongoose = require("mongoose");
 const _ = require("lodash");
 
@@ -71,11 +72,19 @@ exports.createTableau = (req, res) => {
     maxNumberPlayers: req.body.maxNumberPlayers,
     age_minimum: req.body.age_minimum,
     type_licence: req.body.type_licence, // 1 = tous, 2 = loisirs, 3 = compétiteurs
-    is_launched: 0, // 0 = pointage, 1 = poules démarrées, 2 = bracket terminé, 3 = terminé
+    is_launched: 0, // 0 = pointage, 1 = poules démarrées, 2 = bracket démarré, 3 = terminé
     nbPoules: req.body.nbPoules,
     palierQualifies: req.body.palierQualifies,
     palierConsolantes: req.body.palierConsolantes,
     hasChapeau: req.body.hasChapeau,
+    pariable: req.body.pariable,
+    consolantePariable: req.body.consolantePariable,
+    ptsGagnesParisVainqueur: req.body.ptsGagnesParisVainqueur,
+    ptsPerdusParisVainqueur: req.body.ptsPerdusParisVainqueur,
+    ptsGagnesParisWB: req.body.ptsGagnesParisWB,
+    ptsPerdusParisWB: req.body.ptsPerdusParisWB,
+    ptsGagnesParisLB: req.body.ptsGagnesParisLB,
+    ptsPerdusParisLB: req.body.ptsPerdusParisLB,
   });
   tableau
     .save()
@@ -147,6 +156,7 @@ exports.unsubscribeInvalidPlayers = (req, res) => {
 exports.resetTournament = async (_req, res) => {
   try {
     await Logs.updateMany({}, { $set: { logs: [] } });
+    await Paris.deleteMany({});
     await Bracket.deleteMany({});
     await Poule.deleteMany({});
     await Binomes.deleteMany({});
@@ -174,6 +184,23 @@ exports.deleteTableau = async (req, res) => {
       { $pull: { tableaux: { $in: [req.params.tableau_id] } } }
     );
     await Tableau.deleteOne({ _id: req.params.tableau_id });
+
+    // Supprime les paris du tableau si pariable
+    if (req.params.pariable || req.params.consolantePariable) {
+      await Paris.updateMany(
+        {},
+        {
+          $pull: {
+            paris: {
+              id_tableau: req.params.tableau_id,
+            },
+            pronos_vainqueurs: {
+              id_tableau: req.params.tableau_id,
+            },
+          },
+        }
+      );
+    }
     res.status(200).json({ message: "Tableau supprimé" });
   } catch (e) {
     res.status(500).send("Impossible de supprimer le tableau demandé");
@@ -204,4 +231,37 @@ exports.changeLaunchState = (req, res) => {
     .catch(() =>
       res.status(500).send("Impossible de changer l'état du tableau")
     );
+};
+
+exports.pariablesTableaux = async (_req, res) => {
+  try {
+    let tableauxPariablesWithJoueurs = [];
+    let tableauxPariables = await Tableau.find({
+      pariable: true,
+      is_launched: {
+        $gte: 1,
+      },
+    }).sort({ nom: "asc" });
+
+    for (let index = 0; index < tableauxPariables.length; index++) {
+      let joueursTableau = await Joueur.find({
+        tableaux: { $all: [tableauxPariables[index]._id] },
+      })
+        .sort({ nom: "asc" })
+        .select(["_id", "nom"]);
+
+      tableauxPariablesWithJoueurs.push({
+        tableau: tableauxPariables[index],
+        participants: joueursTableau,
+      });
+    }
+
+    res.status(200).json(tableauxPariablesWithJoueurs);
+  } catch (e) {
+    res
+      .status(500)
+      .send(
+        "Impossible de récupérer les tableaux dont les paris sont ouverts et dont les phases finales ont démarré"
+      );
+  }
 };

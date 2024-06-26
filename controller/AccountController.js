@@ -34,7 +34,7 @@ exports.editUsername = (req, res) => {
 };
 
 exports.editPassword = (req, res) => {
-  Account.findOne({ _id: req.body._id })
+  Account.findById(req.body._id)
     .then((account) => {
       if (bcrypt.compareSync(req.body.actualPassword, account.password)) {
         Account.findByIdAndUpdate(

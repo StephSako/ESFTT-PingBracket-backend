@@ -1,3 +1,4 @@
+const Pari = require("../model/Pari");
 const Joueur = require("../model/Joueur");
 const Poule = require("../model/Poule");
 const Binome = require("../model/Binome");
@@ -54,6 +55,60 @@ exports.subscribedPlayersOfSpecificTableau = (req, res) => {
       res
         .status(500)
         .send("Impossible de récupérer les joueurs inscrits au tableau")
+    );
+};
+
+exports.checkIdParieur = (req, res) => {
+  Joueur.find({
+    $where:
+      new RegExp("^.{20}" + req.params.id_parieur + "$") +
+      ".test(this._id.str)",
+  })
+    .then((joueurs) => {
+      if (joueurs.length === 0)
+        res
+          .status(400)
+          .json("Aucun compte ne correspond à l'identifiant renseigné");
+      else if (joueurs.length > 1)
+        res
+          .status(400)
+          .json(
+            "Cet identifiant est partagé par plusieurs comptes : signalez-le à la table de marquage"
+          );
+      else {
+        const parieur = joueurs[0];
+        Pari.find({ id_pronostiqueur: parieur._id })
+          .then((fichePari) => {
+            if (fichePari.length === 0) {
+              const pari = new Pari({
+                _id: new mongoose.Types.ObjectId(),
+                id_pronostiqueur: parieur._id,
+                pronos_vainqueurs: [],
+                paris: [],
+              });
+              pari
+                .save()
+                .then(() => {
+                  res.status(200).json(parieur);
+                })
+                .catch(() =>
+                  res
+                    .status(500)
+                    .send("Impossible de créer la fiche du parieur")
+                );
+            } else {
+              res.status(200).json(parieur);
+            }
+          })
+          .catch(() =>
+            res
+              .status(500)
+              .send("Impossible de récupérer la fiche parieur demandée")
+          );
+      }
+    })
+    .catch(() =>
+      res.status(500).send("Impossible de récupérer le parieur demandé")
     );
 };
 

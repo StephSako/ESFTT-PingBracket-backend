@@ -1,6 +1,8 @@
 const Bracket = require("../model/Bracket");
 const Binome = require("../model/Binome");
 const Poule = require("../model/Poule");
+const Tableau = require("../model/Tableau");
+const Pari = require("../model/Pari");
 const mongoose = require("mongoose");
 const helper = require("./Helper");
 
@@ -92,6 +94,7 @@ async function setPreviousMatchCancelableStatus(
       {
         $set: {
           "matches.$[match].isCancelable": status,
+          "matches.$[match].isLockToBets": true,
         },
       },
       {
@@ -132,6 +135,7 @@ async function defineMatchStatusAndWinner(
       $set: {
         "matches.$[match].joueurs.$[joueur].winner": true,
         "matches.$[match].isCancelable": true,
+        "matches.$[match].isLockToBets": true,
       },
     },
     {
@@ -168,16 +172,73 @@ async function defineMatchStatusAndWinner(
   }
 }
 
-exports.bracketOfSpecificTableau = (req, res) => {
-  Bracket.find({ tableau: req.params.tableau, phase: req.params.phase })
-    .populate("tableau")
-    .populate({
-      path: "matches.joueurs._id",
-      populate: { path: "joueurs" },
+exports.bracketOfSpecificTableau = async (req, res) => {
+  let bracket = {};
+  try {
+    bracket = await Bracket.find({
+      tableau: req.params.tableau,
+      phase: req.params.phase,
     })
-    .sort({ round: "desc" })
-    .then((matches) => res.status(200).json({ rounds: matches }))
-    .catch(() => res.status(500).send("Impossible de récupérer le bracket"));
+      .populate("tableau")
+      .populate({
+        path: "matches.joueurs._id",
+        populate: { path: "joueurs" },
+      })
+      .sort({ round: "desc" });
+  } catch (e) {
+    res.status(500).send("Impossible de récupérer le bracket");
+  }
+
+  let parisJoueur = {};
+  if (req.params.is_pari === "true" && !!req.params.id_parieur) {
+    try {
+      parisJoueur = await Pari.findOne({
+        id_pronostiqueur: req.params.id_parieur,
+      })
+        .populate({
+          path: "pronos_vainqueurs.id_gagnant",
+          populate: { path: "pronos_vainqueurs" },
+          select: "_id nom",
+        })
+        .populate({
+          path: "paris.id_gagnant",
+          populate: { path: "paris" },
+          select: "_id nom",
+        })
+        .populate({
+          path: "paris.id_tableau",
+          populate: { path: "paris" },
+          select: "_id nom format",
+        });
+    } catch (e) {
+      res
+        .status(500)
+        .send(
+          "Impossible de récupérer les paris du parieur " +
+            req.params.id_parieur
+        );
+    }
+  }
+
+  let tableauxPariables = {};
+  if (req.params.is_pari === "true") {
+    try {
+      tableauxPariables = await Tableau.find({
+        pariable: true,
+        is_launched: {
+          $gte: 1,
+        },
+      }).sort({ nom: "asc" });
+    } catch (e) {
+      res.status(500).send("Impossible de récupérer les tableaux pariables");
+    }
+  }
+
+  res.status(200).json({
+    bracket: { rounds: bracket },
+    parisJoueur: parisJoueur,
+    tableauxPariables: tableauxPariables,
+  });
 };
 
 exports.setWinner = async (req, res) => {
@@ -306,6 +367,33 @@ exports.generateBracket = async (req, res) => {
     else nbQualified = poules.length;
     nbQualified += listPerdants.length;
 
+    if (nbQualified <= 1) {
+      res
+        .status(500)
+        .send(
+          "Il n'y a pas assez de " +
+            (req.body.format === "simple" ? "joueurs" : "binômes")
+        );
+    }
+
+    // Supprime les paris du tableau pour cette phase si pariable
+    if (
+      (req.body.pariable && req.params.phase === "finale") ||
+      (req.body.consolantePariable && req.params.phase === "consolante")
+    ) {
+      await Pari.updateMany(
+        {},
+        {
+          $pull: {
+            paris: {
+              id_tableau: req.params.tableau,
+              phase: req.params.phase,
+            },
+          },
+        }
+      );
+    }
+
     if (nbQualified > 64) {
       nbRounds = 7;
       rankOrderer = ORDRE_SOIXANTEQUATRIEME;
@@ -329,104 +417,100 @@ exports.generateBracket = async (req, res) => {
       rankOrderer = ORDRE_FINALE;
     }
 
-    if (nbQualified > 1) {
-      // On initialise tous les matches du bracket
-      for (let i = nbRounds; i > 0; i--) {
-        let matches = [];
-        for (let j = 1; j <= (nbRounds > 1 ? NB_MATCHES_ROUND[i] : 1); j++) {
-          matches.push({
-            id: j,
-            round: i,
-            isCancelable: false,
-            joueurs: [],
-          });
-        }
-
-        // On créé le document de la rencontre
-        const bracket = new Bracket({
-          _id: new mongoose.Types.ObjectId(),
-          type: i !== 1 ? "Winnerbracket" : "Final",
-          objectRef: req.body.format === "double" ? "Binomes" : "Joueurs",
-          tableau: req.params.tableau,
+    // On initialise tous les matches du bracket
+    for (let i = nbRounds; i > 0; i--) {
+      let matches = [];
+      for (let j = 1; j <= (nbRounds > 1 ? NB_MATCHES_ROUND[i] : 1); j++) {
+        matches.push({
+          id: j,
           round: i,
-          phase: req.params.phase,
-          matches: matches,
+          isCancelable: false,
+          isLockToBets: false,
+          joueurs: [],
         });
-        await bracket.save();
       }
 
-      let qualified = listPerdants,
-        id_match = 1;
-      // On créé la liste des joueurs/binômes qualifiés
-      if (req.body.poules) {
-        qualified = poules
-          .map((p) => p.participants)
-          .map(
-            (poule) =>
-              poule.filter(
-                (_j, index) =>
-                  index >=
-                    (req.params.phase === "finale"
-                      ? 0
-                      : req.body.palierQualifies) &&
-                  index <
-                    (req.params.phase === "finale"
-                      ? req.body.palierQualifies
-                      : req.body.palierConsolantes)
-              ) // Nous qualifions les 2 premiers de la poule en phase finale, les 3ème et 4ème en consolante (selon les paramètres)
-          )
-          .flat();
-      } else {
-        // Seul le format 'double' peux ne pas avoir de poules
-        qualified = helper.shuffle(poules.map((binome) => binome._id));
-      }
-
-      // On assigne les matches aux joueurs/binômes
-      for (let i = 0; i < rankOrderer.length; i++) {
-        await setPlayerSpecificMatch(
-          nbRounds,
-          id_match,
-          qualified[req.body.format === "simple" ? rankOrderer[i] - 1 : i],
-          req.params.tableau,
-          req.params.phase
-        );
-
-        if (i % 2 && i !== 0 && req.body.format === "simple")
-          id_match++; // On incrémente le n° du match tous les 2 joueurs/binômes
-        else if (req.body.format === "double") {
-          id_match++;
-          if (i === rankOrderer.length / 2 - 1) id_match = 1;
-        }
-      }
-
-      // Si des joueurs/binômes sont seuls au premier round, ils sont désignés vainqueurs et accèdent au second round
-      let firstRound = await Bracket.findOne({
+      // On créé le document de la rencontre
+      const bracket = new Bracket({
+        _id: new mongoose.Types.ObjectId(),
+        type: i !== 1 ? "Winnerbracket" : "Final",
+        objectRef: req.body.format === "double" ? "Binomes" : "Joueurs",
         tableau: req.params.tableau,
+        round: i,
         phase: req.params.phase,
-      }).sort({ round: "desc" });
-      for (let match of firstRound.matches) {
-        if (!match.joueurs[1]._id || !match.joueurs[0]._id) {
-          let winner_id;
-          if (!match.joueurs[1]._id) winner_id = match.joueurs[0]._id;
-          else if (!match.joueurs[0]._id) winner_id = match.joueurs[1]._id;
+        matches: matches,
+      });
+      await bracket.save();
+    }
 
-          await defineMatchStatusAndWinner(
-            match.round,
-            req.params.tableau,
-            req.params.phase,
-            match.id,
-            winner_id
-          );
-        }
+    let qualified = listPerdants,
+      id_match = 1;
+    // On créé la liste des joueurs/binômes qualifiés
+    if (req.body.poules) {
+      qualified = poules
+        .map((p) => p.participants)
+        .map(
+          (poule) =>
+            poule.filter(
+              (_j, index) =>
+                index >=
+                  (req.params.phase === "finale"
+                    ? 0
+                    : req.body.palierQualifies) &&
+                index <
+                  (req.params.phase === "finale"
+                    ? req.body.palierQualifies
+                    : req.body.palierConsolantes)
+            ) // Nous qualifions les 2 premiers de la poule en phase finale, les 3ème et 4ème en consolante (selon les paramètres)
+        )
+        .flat();
+    } else {
+      // Seul le format 'double' peux ne pas avoir de poules
+      qualified = helper.shuffle(poules.map((binome) => binome._id));
+    }
+
+    // On assigne les matches aux joueurs/binômes
+    for (let i = 0; i < rankOrderer.length; i++) {
+      await setPlayerSpecificMatch(
+        nbRounds,
+        id_match,
+        qualified[req.body.format === "simple" ? rankOrderer[i] - 1 : i],
+        req.params.tableau,
+        req.params.phase
+      );
+
+      if (i % 2 && i !== 0 && req.body.format === "simple")
+        id_match++; // On incrémente le n° du match tous les 2 joueurs/binômes
+      else if (req.body.format === "double") {
+        id_match++;
+        if (i === rankOrderer.length / 2 - 1) id_match = 1;
       }
-      res.status(200).json({ message: "No error" });
-    } else
-      res
-        .status(500)
-        .send(
-          "Il n'y a pas assez de " +
-            (req.body.format === "simple" ? "joueurs" : "binômes")
-        );
+    }
+
+    // Si des joueurs/binômes sont seuls au premier round, ils sont désignés vainqueurs et accèdent au second round
+    let firstRoundMatchesAlone = await Bracket.findOne({
+      tableau: req.params.tableau,
+      phase: req.params.phase,
+    }).sort({ round: "desc" });
+    firstRoundMatchesAlone = firstRoundMatchesAlone.matches.filter(
+      (match) => match.joueurs.filter((joueur) => !joueur._id).length === 1
+    );
+
+    for (let match of firstRoundMatchesAlone) {
+      let winner_id;
+      if (!match.joueurs[1]._id) winner_id = match.joueurs[0]._id;
+      else if (!match.joueurs[0]._id) winner_id = match.joueurs[1]._id;
+
+      await defineMatchStatusAndWinner(
+        match.round,
+        req.params.tableau,
+        req.params.phase,
+        match.id,
+        winner_id
+      );
+    }
+
+    res.status(200).json({ message: "No error" });
   } catch (err) {
     res.status(500).send("Impossible de générer le bracket");
   }
@@ -455,6 +539,7 @@ exports.cancelMatchResult = async (req, res) => {
         $set: {
           "matches.$[match].joueurs.$[joueur].winner": false,
           "matches.$[match].isCancelable": false,
+          "matches.$[match].isLockToBets": false,
         },
       },
       {
@@ -495,8 +580,55 @@ exports.cancelMatchResult = async (req, res) => {
       req.params.phase,
       req.params.match_id
     );
+
+    // On supprime tous les paris de ce match et des matches suivants où le joueur gagnant est présent
+    await Pari.updateMany(
+      {},
+      {
+        $pull: {
+          paris: {
+            id_tableau: req.params.tableau_id,
+            phase: req.params.phase,
+            round: { $lt: parseInt(req.params.match_round) },
+            $or: [
+              { id_gagnant: req.params.winner_id },
+              { id_gagnant: req.params.looser_id },
+            ],
+          },
+        },
+      }
+    );
     res.status(200).json({ message: "Match annulé" });
   } catch (err) {
     res.status(500).send("Impossible d'annuler le match");
   }
+};
+
+exports.lockMatchToBets = async (req, res) => {
+  Bracket.updateOne(
+    {
+      round: parseInt(req.params.match_round),
+      tableau: req.params.tableau_id,
+      phase: req.params.phase,
+      "matches.id": parseInt(req.params.match_id),
+    },
+    {
+      $set: {
+        "matches.$[match].isLockToBets": !req.body.isLocked,
+      },
+    },
+    {
+      arrayFilters: [{ "match.id": parseInt(req.params.match_id) }],
+    }
+  )
+    .then(() => res.status(200).json({ message: "OK" }))
+    .catch(() =>
+      res
+        .status(500)
+        .send(
+          "Impossible de " +
+            (req.body.isLocked ? "déverrouiller" : "verrouiller") +
+            " les paris du match"
+        )
+    );
 };

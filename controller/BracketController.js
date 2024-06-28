@@ -209,6 +209,11 @@ exports.bracketOfSpecificTableau = async (req, res) => {
           path: "paris.id_tableau",
           populate: { path: "paris" },
           select: "_id nom format",
+        })
+        .populate({
+          path: "pronos_vainqueurs.id_tableau",
+          populate: { path: "pronos_vainqueurs" },
+          select: "_id nom format",
         });
     } catch (e) {
       res

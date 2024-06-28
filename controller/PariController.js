@@ -30,6 +30,11 @@ exports.getGeneralResult = async (_req, res) => {
         path: "paris.id_tableau",
         populate: { path: "paris" },
         select: "_id nom format",
+      })
+      .populate({
+        path: "pronos_vainqueurs.id_tableau",
+        populate: { path: "pronos_vainqueurs" },
+        select: "_id nom format",
       });
 
     res.status(200).json({ brackets: brackets, parisJoueurs: parisJoueurs });
@@ -54,6 +59,11 @@ exports.getParisJoueur = (req, res) => {
     .populate({
       path: "paris.id_tableau",
       populate: { path: "paris" },
+      select: "_id nom format",
+    })
+    .populate({
+      path: "pronos_vainqueurs.id_tableau",
+      populate: { path: "pronos_vainqueurs" },
       select: "_id nom format",
     })
     .then((paris) => res.status(200).json(paris))

@@ -452,41 +452,41 @@ exports.generateBracket = async (req, res) => {
       id_match = 1;
     // On créé la liste des joueurs/binômes qualifiés
     if (req.body.poules) {
-      qualified = poules
-        .map((p) => p.participants)
-        .map(
-          (poule) =>
-            poule.filter(
-              (_j, index) =>
-                index >=
-                  (req.params.phase === "finale"
-                    ? 0
-                    : req.body.palierQualifies) &&
-                index <
-                  (req.params.phase === "finale"
-                    ? req.body.palierQualifies
-                    : req.body.palierConsolantes)
-            ) // Nous qualifions les 2 premiers de la poule en phase finale, les 3ème et 4ème en consolante (selon les paramètres)
-        )
-        .flat();
-    } else {
-      // Seul le format 'double' peux ne pas avoir de poules
-      qualified = helper.shuffle(poules.map((binome) => binome._id));
-    }
+      qualified = qualified.concat(
+        poules
+          .map((p) => p.participants)
+          .map(
+            (poule) =>
+              poule.filter(
+                (_j, index) =>
+                  index >=
+                    (req.params.phase === "finale"
+                      ? 0
+                      : req.body.palierQualifies) &&
+                  index <
+                    (req.params.phase === "finale"
+                      ? req.body.palierQualifies
+                      : req.body.palierConsolantes)
+              ) // Nous qualifions les 2 premiers de la poule en phase finale, les 3ème et 4ème en consolante (selon les paramètres)
+          )
+          .flat()
+      );
+    } else
+      qualified = helper.shuffle(poules.map((participant) => participant._id));
 
     // On assigne les matches aux joueurs/binômes
     for (let i = 0; i < rankOrderer.length; i++) {
       await setPlayerSpecificMatch(
         nbRounds,
         id_match,
-        qualified[req.body.format === "simple" ? rankOrderer[i] - 1 : i],
+        qualified[req.body.poules ? rankOrderer[i] - 1 : i],
         req.params.tableau,
         req.params.phase
       );
 
-      if (i % 2 && i !== 0 && req.body.format === "simple")
+      if (i % 2 && i !== 0 && req.body.poules)
         id_match++; // On incrémente le n° du match tous les 2 joueurs/binômes
-      else if (req.body.format === "double") {
+      else if (!req.body.poules) {
         id_match++;
         if (i === rankOrderer.length / 2 - 1) id_match = 1;
       }

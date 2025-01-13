@@ -484,11 +484,9 @@ exports.generateBracket = async (req, res) => {
         req.params.phase
       );
 
-      if (i % 2 && i !== 0 && req.body.poules)
+      if ((i % 2 && i !== 0) || !req.body.poules) {
         id_match++; // On incrémente le n° du match tous les 2 joueurs/binômes
-      else if (!req.body.poules) {
-        id_match++;
-        if (i === rankOrderer.length / 2 - 1) id_match = 1;
+        if (!req.body.poules && i === rankOrderer.length / 2 - 1) id_match = 1;
       }
     }
 

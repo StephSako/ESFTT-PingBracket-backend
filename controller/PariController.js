@@ -18,7 +18,7 @@ exports.getGeneralResult = async (_req, res) => {
       .populate({
         path: "pronos_vainqueurs.id_gagnant",
         populate: { path: "pronos_vainqueurs" },
-        select: "_id nom",
+        select: "_id nom objectRef",
       })
       .populate("id_pronostiqueur", "_id nom")
       .populate({
@@ -166,6 +166,7 @@ exports.parierGagnantTableau = async (req, res) => {
             pronos_vainqueurs: {
               id_tableau: req.params.id_tableau,
               id_gagnant: req.params.id_gagnant,
+              objectRef: req.params.objectRef,
             },
           },
         }

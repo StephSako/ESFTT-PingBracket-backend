@@ -22,7 +22,7 @@ router.delete(
 );
 
 router.post(
-  "/vainqueur/:id_tableau/:id_gagnant",
+  "/vainqueur/:id_tableau/:id_gagnant/:objectRef",
   AuthMiddleware,
   ParisController.parierGagnantTableau
 );

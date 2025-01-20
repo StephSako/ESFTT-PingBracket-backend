@@ -78,6 +78,7 @@ exports.createTableau = (req, res) => {
     palierConsolantes: req.body.palierConsolantes,
     hasChapeau: req.body.hasChapeau,
     pariable: req.body.pariable,
+    bracketPariable: req.body.bracketPariable,
     consolantePariable: req.body.consolantePariable,
     ptsGagnesParisVainqueur: req.body.ptsGagnesParisVainqueur,
     ptsPerdusParisVainqueur: req.body.ptsPerdusParisVainqueur,
@@ -241,14 +242,33 @@ exports.pariablesTableaux = async (_req, res) => {
       is_launched: {
         $gte: 1,
       },
-    }).sort({ nom: "asc" });
+    })
+      .populate("tableau")
+      .sort({ nom: "asc" });
 
     for (let index = 0; index < tableauxPariables.length; index++) {
-      let joueursTableau = await Joueur.find({
-        tableaux: { $all: [tableauxPariables[index]._id] },
-      })
-        .sort({ nom: "asc" })
-        .select(["_id", "nom"]);
+      let joueursTableau = [];
+
+      // Tableaux au format Simple
+      if (tableauxPariables[index].format === "simple") {
+        joueursTableau = await Joueur.find({
+          tableaux: { $all: [tableauxPariables[index]._id] },
+        })
+          .sort({ nom: "asc" })
+          .select(["_id", "nom"]);
+      }
+      // Tableaux au format Double
+      else if (tableauxPariables[index].format === "double") {
+        const binomes = await Binomes.find({
+          tableau: tableauxPariables[index]._id,
+        }).populate("joueurs");
+        joueursTableau = binomes.map((binomes) => {
+          return {
+            _id: binomes._id,
+            nom: binomes.joueurs.map((joueur) => joueur.nom).join(" - "),
+          };
+        });
+      }
 
       tableauxPariablesWithJoueurs.push({
         tableau: tableauxPariables[index],

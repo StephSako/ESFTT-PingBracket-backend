@@ -9,9 +9,10 @@ const pariSchema = mongoose.Schema(
     },
     pronos_vainqueurs: [
       {
+        objectRef: String,
         id_gagnant: {
           type: mongoose.Types.ObjectId,
-          ref: "Joueurs",
+          refPath: "pronos_vainqueurs.objectRef",
         },
         id_tableau: {
           type: mongoose.Types.ObjectId,

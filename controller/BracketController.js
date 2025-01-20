@@ -173,8 +173,6 @@ async function defineMatchStatusAndWinner(
 }
 
 exports.bracketOfSpecificTableau = async (req, res) => {
-  let tableau = await Tableau.findById(req.params.tableau);
-
   let bracket = {};
 
   try {
@@ -195,45 +193,29 @@ exports.bracketOfSpecificTableau = async (req, res) => {
   let parisJoueur = {};
   if (req.params.is_pari === "true" && !!req.params.id_parieur) {
     try {
-      if (tableau.bracketPariable) {
-        parisJoueur = await Pari.findOne({
-          id_pronostiqueur: req.params.id_parieur,
+      parisJoueur = await Pari.findOne({
+        id_pronostiqueur: req.params.id_parieur,
+      })
+        .populate({
+          path: "pronos_vainqueurs.id_gagnant",
+          populate: { path: "pronos_vainqueurs" },
+          select: "_id nom",
         })
-          .populate({
-            path: "pronos_vainqueurs.id_gagnant",
-            populate: { path: "pronos_vainqueurs" },
-            select: "_id nom",
-          })
-          .populate({
-            path: "paris.id_gagnant",
-            populate: { path: "paris" },
-            select: "_id nom",
-          })
-          .populate({
-            path: "paris.id_tableau",
-            populate: { path: "paris" },
-            select: "_id nom format",
-          })
-          .populate({
-            path: "pronos_vainqueurs.id_tableau",
-            populate: { path: "pronos_vainqueurs" },
-            select: "_id nom format",
-          });
-      } else {
-        parisJoueur = await Pari.findOne({
-          id_pronostiqueur: req.params.id_parieur,
+        .populate({
+          path: "paris.id_gagnant",
+          populate: { path: "paris" },
+          select: "_id nom",
         })
-          .populate({
-            path: "pronos_vainqueurs.id_gagnant",
-            populate: { path: "pronos_vainqueurs" },
-            select: "_id nom",
-          })
-          .populate({
-            path: "pronos_vainqueurs.id_tableau",
-            populate: { path: "pronos_vainqueurs" },
-            select: "_id nom format",
-          });
-      }
+        .populate({
+          path: "paris.id_tableau",
+          populate: { path: "paris" },
+          select: "_id nom format",
+        })
+        .populate({
+          path: "pronos_vainqueurs.id_tableau",
+          populate: { path: "pronos_vainqueurs" },
+          select: "_id nom format",
+        });
     } catch (e) {
       res
         .status(500)

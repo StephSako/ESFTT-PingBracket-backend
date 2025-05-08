@@ -186,8 +186,8 @@ exports.deleteTableau = async (req, res) => {
     );
     await Tableau.deleteOne({ _id: req.params.tableau_id });
 
-    // Supprime les paris du tableau si pariable
-    if (req.params.pariable || req.params.consolantePariable) {
+    // Supprime tous les paris du tableau si pariable
+    if (req.params.pariable) {
       await Paris.updateMany(
         {},
         {

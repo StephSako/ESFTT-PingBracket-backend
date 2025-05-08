@@ -384,7 +384,7 @@ exports.generateBracket = async (req, res) => {
 
     // Supprime les paris du tableau pour cette phase si pariable
     if (
-      (req.body.pariable && req.params.phase === "finale") ||
+      (req.body.bracketPariable && req.params.phase === "finale") ||
       (req.body.consolantePariable && req.params.phase === "consolante")
     ) {
       await Pari.updateMany(

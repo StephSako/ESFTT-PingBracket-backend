@@ -1,5 +1,6 @@
 const Pari = require("../model/Pari");
 const Bracket = require("../model/Bracket");
+const Binome = require("../model/Binome");
 
 exports.getGeneralResult = async (_req, res) => {
   try {
@@ -14,6 +15,7 @@ exports.getGeneralResult = async (_req, res) => {
       (bracket) => bracket.tableau.pariable && bracket.tableau.is_launched >= 1
     );
 
+    let parisJoueurCustom = {};
     let parisJoueurs = await Pari.find()
       .populate({
         path: "pronos_vainqueurs.id_gagnant",
@@ -37,7 +39,29 @@ exports.getGeneralResult = async (_req, res) => {
         select: "_id nom format",
       });
 
-    res.status(200).json({ brackets: brackets, parisJoueurs: parisJoueurs });
+    // On populate les noms des binômes vainqueurs
+    parisJoueurCustom = JSON.parse(JSON.stringify(parisJoueurs));
+    for (let j = 0; j < parisJoueurCustom.length; j++) {
+      for (let i = 0; i < parisJoueurCustom[j].pronos_vainqueurs.length; i++) {
+        if (
+          parisJoueurCustom[j].pronos_vainqueurs[i].id_tableau.format ===
+          "double"
+        ) {
+          let joueursBinome = await Binome.findById(
+            parisJoueurCustom[j].pronos_vainqueurs[i].id_gagnant._id
+          ).populate("joueurs");
+          let nomVainqueurBinome = joueursBinome.joueurs
+            .map((joueur) => joueur.nom)
+            .join(" - ");
+          parisJoueurCustom[j].pronos_vainqueurs[0].id_gagnant.nom =
+            nomVainqueurBinome;
+        }
+      }
+    }
+
+    res
+      .status(200)
+      .json({ brackets: brackets, parisJoueurs: parisJoueurCustom });
   } catch (e) {
     res.status(500).send("Impossible de générer les classements des paris");
   }

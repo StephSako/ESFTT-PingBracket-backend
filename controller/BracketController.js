@@ -191,6 +191,7 @@ exports.bracketOfSpecificTableau = async (req, res) => {
   }
 
   let parisJoueur = {};
+  let parisJoueurCustom = {};
   if (req.params.is_pari === "true" && !!req.params.id_parieur) {
     try {
       parisJoueur = await Pari.findOne({
@@ -216,6 +217,23 @@ exports.bracketOfSpecificTableau = async (req, res) => {
           populate: { path: "pronos_vainqueurs" },
           select: "_id nom format",
         });
+
+      // On populate les noms des binômes vainqueurs
+      parisJoueurCustom = JSON.parse(JSON.stringify(parisJoueur));
+      for (let i = 0; i < parisJoueurCustom.pronos_vainqueurs.length; i++) {
+        if (
+          parisJoueurCustom.pronos_vainqueurs[i].id_tableau.format === "double"
+        ) {
+          let joueursBinome = await Binome.findById(
+            parisJoueurCustom.pronos_vainqueurs[i].id_gagnant._id
+          ).populate("joueurs");
+          let nomVainqueurBinome = joueursBinome.joueurs
+            .map((joueur) => joueur.nom)
+            .join(" - ");
+          parisJoueurCustom.pronos_vainqueurs[0].id_gagnant.nom =
+            nomVainqueurBinome;
+        }
+      }
     } catch (e) {
       res
         .status(500)
@@ -242,7 +260,7 @@ exports.bracketOfSpecificTableau = async (req, res) => {
 
   res.status(200).json({
     bracket: { rounds: bracket },
-    parisJoueur: parisJoueur,
+    parisJoueur: parisJoueurCustom,
     tableauxPariables: tableauxPariables,
   });
 };

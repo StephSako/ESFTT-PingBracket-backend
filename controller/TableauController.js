@@ -219,19 +219,55 @@ exports.unsubscribeAllPlayers = async (req, res) => {
     );
 };
 
-exports.changeLaunchState = (req, res) => {
-  Tableau.updateOne(
-    { _id: req.params.id_tableau },
-    { $set: { is_launched: req.body.is_launched } }
-  )
-    .then(() =>
-      res.status(200).json({
-        message: "Etat du tableau modifié",
-      })
+exports.changeLaunchState = async (req, res) => {
+  // On vérifie que le tableau aie assez de joueurs/binômes pour lancer les poules/phases finales
+  let erreur = false;
+  if (
+    req.body.format === "simple" &&
+    req.body.is_launched === 1 &&
+    req.body.poules
+  ) {
+    // Assez de joueurs
+    let joueursInscrits = await Joueur.find({
+      tableaux: { $all: [req.params.id_tableau] },
+    }).sort({ nom: "asc" });
+    if (joueursInscrits.length <= 1) {
+      erreur = true;
+      res.status(500).send("Il n'y a pas assez de joueurs inscrits");
+    }
+  } else if (
+    req.body.format === "double" &&
+    ((req.body.is_launched === 2 && !req.body.poules) ||
+      (req.body.is_launched === 1 && req.body.poules))
+  ) {
+    // Assez de binomes
+    let binomesComplets = await Binomes.find({
+      tableau: req.params.id_tableau,
+    });
+    if (
+      binomesComplets.filter(
+        (binome) => binome.joueurs.length === req.body.maxNumberPlayers
+      ).length <= 1
+    ) {
+      erreur = true;
+      res.status(500).send("Il n'y a pas assez de binômes complets inscrits");
+    }
+  }
+
+  if (!erreur) {
+    Tableau.updateOne(
+      { _id: req.params.id_tableau },
+      { $set: { is_launched: req.body.is_launched } }
     )
-    .catch(() =>
-      res.status(500).send("Impossible de changer l'état du tableau")
-    );
+      .then(() =>
+        res.status(200).json({
+          message: "Etat du tableau modifié",
+        })
+      )
+      .catch(() =>
+        res.status(500).send("Impossible de changer l'état du tableau")
+      );
+  }
 };
 
 exports.pariablesTableaux = async (_req, res) => {

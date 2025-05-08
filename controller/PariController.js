@@ -115,22 +115,45 @@ exports.cancel = async (req, res) => {
 };
 
 exports.deleteParisPhase = (req, res) => {
-  let filter =
-    req.params.phase === "null"
-      ? {
+  /**
+   * all : vainqueur + finale + consolante
+   * all_brackets : finale + consolante
+   * consolante : consolante
+   */
+  let filter = {};
+
+  switch (req.params.phase) {
+    case "all":
+      filter = {
+        paris: {
           id_tableau: req.params.id_tableau,
-        }
-      : {
+        },
+        pronos_vainqueurs: {
+          id_tableau: req.params.id_tableau,
+        },
+      };
+      break;
+    case "all_brackets":
+      filter = {
+        paris: {
+          id_tableau: req.params.id_tableau,
+        },
+      };
+      break;
+    case "consolante":
+      filter = {
+        paris: {
           id_tableau: req.params.id_tableau,
           phase: req.params.phase,
-        };
+        },
+      };
+      break;
+  }
+
   Pari.updateMany(
-    // On supprime les paris du tableau et de la phase demandés
     {},
     {
-      $pull: {
-        paris: filter,
-      },
+      $pull: filter,
     }
   )
     .then(() =>
@@ -138,7 +161,7 @@ exports.deleteParisPhase = (req, res) => {
         message:
           "Paris supprimés du tableau '" +
           req.params.id_tableau +
-          "' pour la phase '" +
+          "' pour '" +
           req.params.phase +
           "'",
       })
@@ -149,7 +172,7 @@ exports.deleteParisPhase = (req, res) => {
         .send(
           "Impossible de supprimer les paris du tableau '" +
             req.params.id_tableau +
-            "' pour la phase '" +
+            "' pour '" +
             req.params.phase +
             "'"
         )

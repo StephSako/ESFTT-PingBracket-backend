@@ -239,7 +239,7 @@ exports.bracketOfSpecificTableau = async (req, res) => {
           let nomVainqueurBinome = joueursBinome.joueurs
             .map((joueur) => joueur.nom)
             .join(" - ");
-          parisJoueurCustom.pronos_vainqueurs[0].id_gagnant.nom =
+          parisJoueurCustom.pronos_vainqueurs[i].id_gagnant.nom =
             nomVainqueurBinome;
         }
       }

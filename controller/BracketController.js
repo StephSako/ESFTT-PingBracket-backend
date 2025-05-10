@@ -5,6 +5,7 @@ const Tableau = require("../model/Tableau");
 const Pari = require("../model/Pari");
 const mongoose = require("mongoose");
 const helper = require("./Helper");
+const Joueur = require("../model/Joueur");
 
 const NB_MATCHES_ROUND = { 7: 64, 6: 32, 5: 16, 4: 8, 3: 4, 2: 2, 1: 2 };
 const ORDRE_SOIXANTEQUATRIEME = [
@@ -192,7 +193,15 @@ exports.bracketOfSpecificTableau = async (req, res) => {
 
   let parisJoueur = {};
   let parisJoueurCustom = {};
+
   if (req.params.is_pari === "true" && !!req.params.id_parieur) {
+    let checkCompteExistant =
+      (await Joueur.findById(req.params.id_parieur)) != null;
+
+    if (!checkCompteExistant) {
+      res.status(511).send("Compte inexistant : veuillez vous reconnectez");
+    }
+
     try {
       parisJoueur = await Pari.findOne({
         id_pronostiqueur: req.params.id_parieur,

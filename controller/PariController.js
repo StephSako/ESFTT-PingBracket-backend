@@ -1,6 +1,7 @@
 const Pari = require("../model/Pari");
 const Bracket = require("../model/Bracket");
 const Binome = require("../model/Binome");
+const Joueur = require("../model/Joueur");
 
 exports.getGeneralResult = async (_req, res) => {
   try {
@@ -67,37 +68,44 @@ exports.getGeneralResult = async (_req, res) => {
   }
 };
 
-exports.getParisJoueur = (req, res) => {
-  Pari.findOne({ id_pronostiqueur: req.params.id_parieur })
-    .populate({
-      path: "pronos_vainqueurs.id_gagnant",
-      populate: { path: "pronos_vainqueurs" },
-      select: "_id nom",
-    })
-    .populate("id_pronostiqueur", "_id nom")
-    .populate({
-      path: "paris.id_gagnant",
-      populate: { path: "paris" },
-      select: "_id nom",
-    })
-    .populate({
-      path: "paris.id_tableau",
-      populate: { path: "paris" },
-      select: "_id nom format",
-    })
-    .populate({
-      path: "pronos_vainqueurs.id_tableau",
-      populate: { path: "pronos_vainqueurs" },
-      select: "_id nom format",
-    })
-    .then((paris) => res.status(200).json(paris))
-    .catch(() =>
-      res
-        .status(500)
-        .send(
-          "Impossible de récupérer les paris du joueur " + req.params.id_parieur
-        )
-    );
+exports.getParisJoueur = async (req, res) => {
+  let checkCompteExistant =
+    (await Joueur.findById(req.params.id_parieur)) != null;
+  if (!checkCompteExistant) {
+    res.status(511).send("Compte inexistant : veuillez vous reconnectez");
+  } else {
+    Pari.findOne({ id_pronostiqueur: req.params.id_parieur })
+      .populate({
+        path: "pronos_vainqueurs.id_gagnant",
+        populate: { path: "pronos_vainqueurs" },
+        select: "_id nom",
+      })
+      .populate("id_pronostiqueur", "_id nom")
+      .populate({
+        path: "paris.id_gagnant",
+        populate: { path: "paris" },
+        select: "_id nom",
+      })
+      .populate({
+        path: "paris.id_tableau",
+        populate: { path: "paris" },
+        select: "_id nom format",
+      })
+      .populate({
+        path: "pronos_vainqueurs.id_tableau",
+        populate: { path: "pronos_vainqueurs" },
+        select: "_id nom format",
+      })
+      .then((paris) => res.status(200).json(paris))
+      .catch(() =>
+        res
+          .status(500)
+          .send(
+            "Impossible de récupérer les paris du parieur " +
+              req.params.id_parieur
+          )
+      );
+  }
 };
 
 exports.addPariFromMatch = async (req, res) => {

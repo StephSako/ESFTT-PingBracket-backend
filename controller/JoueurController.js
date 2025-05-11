@@ -128,7 +128,17 @@ exports.unassignedPlayersBinomes = async (req, res) => {
         return subscribed.equals(assigned);
       }
     );
-    res.status(200).json(subscribedUnassignedPlayers);
+    res
+      .status(200)
+      .json(
+        subscribedUnassignedPlayers.sort((j1, j2) =>
+          j1.classement < j2.classement
+            ? 1
+            : j1.classement > j2.classement
+            ? -1
+            : j1.nom.localeCompare(j2.nom)
+        )
+      );
   } catch (e) {
     res
       .status(500)

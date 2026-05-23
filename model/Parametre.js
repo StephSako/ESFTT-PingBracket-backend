@@ -8,6 +8,7 @@ const parametreSchema = mongoose.Schema({
   texte_buffet: String,
   texte_fin: String,
   texte_contact: String,
+  texte_affiliation: String,
   consignes_tableaux: String,
   open: Boolean,
 });

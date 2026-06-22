@@ -5,15 +5,16 @@ const joueurSchema = mongoose.Schema(
     _id: mongoose.Types.ObjectId,
     classement: Number,
     pointage: Boolean,
+    mail: String,
     nom: String,
     age: Number,
     buffet: Boolean,
     tableaux: [
       {
         type: mongoose.Types.ObjectId,
-        ref: "Tableaux",
-      },
-    ],
+        ref: "Tableaux"
+      }
+    ]
   },
   { _id: false }
 );

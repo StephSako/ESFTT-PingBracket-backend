@@ -83,7 +83,7 @@ exports.checkIdParieur = (req, res) => {
                 _id: new mongoose.Types.ObjectId(),
                 id_pronostiqueur: parieur._id,
                 pronos_vainqueurs: [],
-                paris: [],
+                paris: []
               });
               pari
                 .save()
@@ -113,11 +113,11 @@ exports.checkIdParieur = (req, res) => {
 
 exports.unassignedPlayersBinomes = async (req, res) => {
   let assignedPlayers = await Binome.find({
-    tableau: req.params.tableau,
+    tableau: req.params.tableau
   }).populate("joueurs");
   let assignedPlayersIds = assignedPlayers.map((poule) => poule.joueurs).flat();
   let subscribedPlayersIds = await getPlayers({
-    tableaux: { $all: [req.params.tableau] },
+    tableaux: { $all: [req.params.tableau] }
   });
 
   try {
@@ -135,8 +135,8 @@ exports.unassignedPlayersBinomes = async (req, res) => {
           j1.classement < j2.classement
             ? 1
             : j1.classement > j2.classement
-            ? -1
-            : j1.nom.localeCompare(j2.nom)
+              ? -1
+              : j1.nom.localeCompare(j2.nom)
         )
       );
   } catch (e) {
@@ -150,7 +150,7 @@ exports.unassignedPlayersBinomes = async (req, res) => {
 
 exports.subscribePlayer = async (req, res) => {
   let searchedJoueur = await Joueur.findOne({
-    nom: req.body.joueur.nom.toUpperCase(),
+    nom: req.body.joueur.nom.toUpperCase()
   });
   if (searchedJoueur) {
     await Joueur.updateOne(
@@ -158,12 +158,12 @@ exports.subscribePlayer = async (req, res) => {
         nom: req.body.joueur.nom
           .toUpperCase()
           .trim()
-          .replace(/\s{2,}/g, " "),
+          .replace(/\s{2,}/g, " ")
       },
       {
         $addToSet: {
-          tableaux: req.body.tableaux.map((tableau) => tableau._id),
-        },
+          tableaux: req.body.tableaux.map((tableau) => tableau._id)
+        }
       }
     );
   } else {
@@ -175,9 +175,10 @@ exports.subscribePlayer = async (req, res) => {
         .replace(/\s{2,}/g, " "),
       age: req.body.joueur.age === 0 ? null : req.body.joueur.age,
       pointage: false,
+      mail: req.body.joueur.mail,
       buffet: req.body.joueur.buffet,
       tableaux: req.body.tableaux.map((tableau) => tableau._id),
-      classement: req.body.joueur.classement ? req.body.joueur.classement : 0,
+      classement: req.body.joueur.classement ? req.body.joueur.classement : 0
     });
     await joueur.save();
   }
@@ -187,14 +188,14 @@ exports.subscribePlayer = async (req, res) => {
     for (let i = 0; i < req.body.tableaux.length; i++) {
       if (req.body.tableaux[i].format === "double") {
         let nbJoueursInscrits = await Joueur.countDocuments({
-          tableaux: { $all: [req.body.tableaux[i]] },
+          tableaux: { $all: [req.body.tableaux[i]] }
         });
 
         if (nbJoueursInscrits % 2 !== 0) {
           let binome = new Binome({
             _id: new mongoose.Types.ObjectId(),
             tableau: req.body.tableaux[i]._id,
-            joueurs: [],
+            joueurs: []
           });
           await binome.save();
         }
@@ -214,7 +215,8 @@ exports.editPlayer = (req, res) => {
       .replace(/\s{2,}/g, " "),
     age: req.body.age,
     buffet: req.body.buffet,
-    classement: req.body.classement ? req.body.classement : 0,
+    mail: req.body.mail,
+    classement: req.body.classement ? req.body.classement : 0
   };
   Joueur.updateOne({ _id: req.params.id_player }, { $set: joueur })
     .then((result) => res.status(200).json(result))
@@ -238,17 +240,17 @@ exports.unsubscribedPlayer = async (req, res) => {
 
       // On supprime le premier binôme vide en trop du tableau
       let nbMinBinomesNecessaires = await Joueur.countDocuments({
-        tableaux: { $all: [req.params.tableau] },
+        tableaux: { $all: [req.params.tableau] }
       });
       let nbBinomes = await Binome.countDocuments({
-        tableau: req.params.tableau,
+        tableau: req.params.tableau
       });
       if (nbMinBinomesNecessaires % 2 !== 0) nbMinBinomesNecessaires++;
       nbMinBinomesNecessaires /= 2;
       if (nbBinomes > nbMinBinomesNecessaires) {
         await Binome.deleteOne({
           tableau: req.params.tableau,
-          joueurs: { $exists: true, $size: 0 },
+          joueurs: { $exists: true, $size: 0 }
         });
       }
     }
@@ -279,17 +281,17 @@ exports.deletePlayer = async (req, res) => {
 
   // On supprime le premier binôme vide en trop du tableau
   let nbMinBinomesNecessaires = await Joueur.countDocuments({
-    tableaux: { $all: [req.params.tableau] },
+    tableaux: { $all: [req.params.tableau] }
   });
   let nbBinomes = await Binome.countDocuments({
-    tableau: req.params.tableau,
+    tableau: req.params.tableau
   });
   if (nbMinBinomesNecessaires % 2 !== 0) nbMinBinomesNecessaires++;
   nbMinBinomesNecessaires /= 2;
   if (nbBinomes > nbMinBinomesNecessaires) {
     await Binome.deleteOne({
       tableau: req.params.tableau,
-      joueurs: { $exists: true, $size: 0 },
+      joueurs: { $exists: true, $size: 0 }
     });
   }
 
@@ -305,8 +307,8 @@ exports.movePlayers = async (req, res) => {
       {
         tableaux: {
           $all: [req.body.previousTableauId],
-          $nin: [req.body.newTableauId],
-        },
+          $nin: [req.body.newTableauId]
+        }
       },
       { $push: { tableaux: req.body.newTableauId } }
     );
